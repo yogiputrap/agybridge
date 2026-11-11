@@ -188,7 +188,7 @@ export default function OAuth({ onNavigateTab }) {
   return (
     <div className="space-y-6">
       {/* Banner Penjelasan Modern */}
-      <div className="bg-gradient-to-r from-orange-900/30 via-purple-900/20 to-dark-800 border border-orange-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-orange-500/15 via-purple-500/10 to-dark-900 border border-orange-500/30 rounded-2xl p-6 shadow-card relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@ export default function OAuth({ onNavigateTab }) {
               </span>
               <span className="text-xs text-gray-400">Resmi Google Antigravity</span>
             </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">
+            <h2 className="text-2xl font-bold text-ink tracking-tight">
               One-Click Google Authentication
             </h2>
             <p className="text-sm text-gray-300 max-w-2xl leading-relaxed">
@@ -234,13 +234,13 @@ export default function OAuth({ onNavigateTab }) {
       {/* TAMPILAN STATUS: 1. IDLE (TOMBOL UTAMA 1-KLIK) */}
       {status === "idle" && (
         <div className="space-y-6">
-          <div className="card p-8 text-center space-y-6 bg-gradient-to-b from-dark-800 to-dark-900/90 border-purple-500/30 shadow-2xl">
+          <div className="card p-8 text-center space-y-6 bg-gradient-to-b from-dark-800 to-dark-900/90 border-purple-500/30 shadow-card">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center mx-auto shadow-lg shadow-purple-600/30">
               <Rocket className="text-white" size={32} />
             </div>
 
             <div className="max-w-md mx-auto space-y-2">
-              <h3 className="text-xl font-bold text-white">Hubungkan Akun Google Anda</h3>
+              <h3 className="text-xl font-bold text-ink">Hubungkan Akun Google Anda</h3>
               <p className="text-sm text-gray-400 leading-relaxed">
                 Klik tombol di bawah ini. Jendela resmi Google akan terbuka untuk meminta izin akun Antigravity. Setelah Anda setujui, akun langsung aktif tanpa unduh file JSON.
               </p>
@@ -273,7 +273,7 @@ export default function OAuth({ onNavigateTab }) {
               <div className="flex items-start gap-2.5 p-2 rounded-lg bg-dark-900/50">
                 <ShieldCheck size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-semibold text-white">OAuth 2.0 Resmi</div>
+                  <div className="font-semibold text-ink">OAuth 2.0 Resmi</div>
                   <div className="text-gray-500">Token langsung dari Google Cloud</div>
                 </div>
               </div>
@@ -281,7 +281,7 @@ export default function OAuth({ onNavigateTab }) {
               <div className="flex items-start gap-2.5 p-2 rounded-lg bg-dark-900/50">
                 <Sparkles size={16} className="text-purple-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-semibold text-white">Deteksi Tier Otomatis</div>
+                  <div className="font-semibold text-ink">Deteksi Tier Otomatis</div>
                   <div className="text-gray-500">Free, Pro, atau Ultra siap pakai</div>
                 </div>
               </div>
@@ -289,7 +289,7 @@ export default function OAuth({ onNavigateTab }) {
               <div className="flex items-start gap-2.5 p-2 rounded-lg bg-dark-900/50">
                 <CheckCircle2 size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-semibold text-white">Auto Simpan DB</div>
+                  <div className="font-semibold text-ink">Auto Simpan DB</div>
                   <div className="text-gray-500">Tanpa repot upload berkas manual</div>
                 </div>
               </div>
@@ -301,7 +301,7 @@ export default function OAuth({ onNavigateTab }) {
             <div className="card p-5 space-y-4 border-dark-600 bg-dark-850">
               <div className="flex items-center gap-2">
                 <Laptop size={18} className="text-indigo-400" />
-                <h4 className="font-semibold text-white text-sm">
+                <h4 className="font-semibold text-ink text-sm">
                   Panduan Autentikasi Remote VPS (Jika Browser Laptop Menampilkan Koneksi Gagal)
                 </h4>
               </div>
@@ -315,7 +315,7 @@ export default function OAuth({ onNavigateTab }) {
                   value={callbackUrl}
                   onChange={(e) => setCallbackUrl(e.target.value)}
                   placeholder="Tempelkan URL callback di sini (misal: http://localhost:11451/?state=xxx&code=xxx...)"
-                  className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
+                  className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-ink placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
                   rows={3}
                 />
 
@@ -334,14 +334,14 @@ export default function OAuth({ onNavigateTab }) {
 
       {/* TAMPILAN STATUS: 2. AUTHENTICATING (PROGRESS ANIMASI) */}
       {status === "authenticating" && (
-        <div className="card p-8 space-y-6 text-center max-w-xl mx-auto border-purple-500/40 shadow-2xl">
+        <div className="card p-8 space-y-6 text-center max-w-xl mx-auto border-purple-500/40 shadow-card">
           <div className="relative w-16 h-16 mx-auto">
             <div className="absolute inset-0 rounded-full border-4 border-purple-500/20 animate-pulse"></div>
             <div className="w-16 h-16 rounded-full border-4 border-purple-500 border-t-transparent animate-spin flex items-center justify-center"></div>
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-lg font-bold text-white">Menghubungkan ke Akun Google...</h3>
+            <h3 className="text-lg font-bold text-ink">Menghubungkan ke Akun Google...</h3>
             <p className="text-xs text-gray-400 max-w-md mx-auto">
               Silakan selesaikan proses login dan persetujuan akun di jendela popup yang telah terbuka.
             </p>
@@ -356,7 +356,7 @@ export default function OAuth({ onNavigateTab }) {
               <span className="text-gray-300">1. Inisialisasi Tautan Google OAuth</span>
             </div>
 
-            <div className="flex items-center gap-3 p-2.5 rounded-lg bg-purple-900/30 border border-purple-500/40">
+            <div className="flex items-center gap-3 p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30">
               <Loader2 size={16} className="animate-spin text-purple-400" />
               <span className="text-purple-200 font-medium">
                 2. Menunggu Persetujuan di Jendela Google...
@@ -414,7 +414,7 @@ export default function OAuth({ onNavigateTab }) {
                 value={callbackUrl}
                 onChange={(e) => setCallbackUrl(e.target.value)}
                 placeholder="Tempelkan URL callback di sini (http://localhost:11451/?state=xxx&code=xxx...)"
-                className="w-full px-3 py-2 bg-dark-900 border border-dark-600 rounded-lg text-xs text-white placeholder-gray-500 font-mono"
+                className="w-full px-3 py-2 bg-dark-900 border border-dark-600 rounded-lg text-xs text-ink placeholder-gray-500 font-mono"
                 rows={2}
               />
               <button
@@ -431,13 +431,13 @@ export default function OAuth({ onNavigateTab }) {
 
       {/* TAMPILAN STATUS: 3. SUCCESS (KARTU SUKSES & TINDAKAN SELANJUTNYA) */}
       {status === "success" && (
-        <div className="card p-8 space-y-6 max-w-xl mx-auto border-emerald-500/40 bg-gradient-to-b from-dark-800 to-dark-900 shadow-2xl">
+        <div className="card p-8 space-y-6 max-w-xl mx-auto border-emerald-500/40 bg-gradient-to-b from-dark-800 to-dark-900 shadow-card">
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/20">
             <CheckCircle2 size={36} />
           </div>
 
           <div className="text-center space-y-1">
-            <h3 className="text-xl font-bold text-white">Akun Google Berhasil Terhubung!</h3>
+            <h3 className="text-xl font-bold text-ink">Akun Google Berhasil Terhubung!</h3>
             <p className="text-xs text-gray-400">
               Kredensial dan refresh token telah disimpan dengan aman ke database AGYBridge.
             </p>
@@ -447,7 +447,7 @@ export default function OAuth({ onNavigateTab }) {
           <div className="bg-dark-900 border border-dark-700 rounded-xl p-4 space-y-2.5 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-gray-500">Email Akun:</span>
-              <span className="font-semibold text-white font-mono">{successData?.email || "-"}</span>
+              <span className="font-semibold text-ink font-mono">{successData?.email || "-"}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-500">Langganan / Tier:</span>
@@ -494,7 +494,7 @@ export default function OAuth({ onNavigateTab }) {
 
             <button
               onClick={downloadBackupCreds}
-              className="text-gray-400 hover:text-white flex items-center gap-1"
+              className="text-gray-400 hover:text-ink flex items-center gap-1"
             >
               Unduh Berkas Backup JSON
             </button>

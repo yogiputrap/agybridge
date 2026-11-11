@@ -27,7 +27,7 @@ export default function About({ version, onCheckUpdate, checkingUpdate }) {
             <div key={ep.label} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm">
               <span className="text-gray-500 sm:w-28 flex-shrink-0">{ep.label}</span>
               <code
-                className="bg-dark-800 border border-dark-600 rounded px-2 py-1 text-xs text-gray-300 cursor-pointer hover:text-white break-all"
+                className="bg-dark-800 border border-dark-600 rounded px-2 py-1 text-xs text-gray-300 cursor-pointer hover:text-ink break-all"
                 onClick={() => copyText(ep.value)}
               >
                 {ep.value}
@@ -44,7 +44,7 @@ export default function About({ version, onCheckUpdate, checkingUpdate }) {
             <Logo size={30} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">AGYBridge</h2>
+            <h2 className="text-2xl font-bold text-ink tracking-tight">AGYBridge</h2>
             <p className="text-gray-400 text-sm">
               {version?.version ? `Versi: ${version.version}` : "Layanan Proksi Gateway API"}
             </p>

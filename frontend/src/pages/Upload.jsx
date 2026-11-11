@@ -51,7 +51,7 @@ export default function UploadPage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-br from-emerald-900/30 to-emerald-800/10 border border-emerald-700/30 rounded-xl p-5">
+      <div className="bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 border border-emerald-700/30 rounded-xl p-5">
         <h3 className="text-lg font-semibold text-emerald-400 mb-2">Impor Kredensial Massal</h3>
         <p className="text-sm text-gray-400">
           Mendukung impor berkas kredensial Antigravity (.json atau arsip .zip berisi berkas JSON).

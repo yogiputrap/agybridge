@@ -338,15 +338,15 @@ export default function Credentials({ onNavigateTab }) {
 
       {/* Ringkasan Statistik */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <div className="bg-dark-800 border border-dark-600 rounded-xl p-3 sm:p-4 text-center">
-          <div className="text-xl sm:text-2xl font-bold text-white">{stats.total}</div>
+        <div className="bg-dark-900 border border-dark-700/60 shadow-card rounded-2xl p-3 sm:p-4 text-center">
+          <div className="text-xl sm:text-2xl font-bold text-ink">{stats.total}</div>
           <div className="text-xs text-gray-500 mt-0.5">Total Akun</div>
         </div>
-        <div className="bg-emerald-900/20 border border-emerald-700/30 rounded-xl p-3 sm:p-4 text-center">
+        <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-3 sm:p-4 text-center">
           <div className="text-xl sm:text-2xl font-bold text-emerald-400">{stats.normal}</div>
           <div className="text-xs text-gray-500 mt-0.5">Aktif</div>
         </div>
-        <div className="bg-red-900/20 border border-red-700/30 rounded-xl p-3 sm:p-4 text-center">
+        <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-3 sm:p-4 text-center">
           <div className="text-xl sm:text-2xl font-bold text-red-400">{stats.disabled}</div>
           <div className="text-xs text-gray-500 mt-0.5">Nonaktif</div>
         </div>
@@ -534,7 +534,7 @@ export default function Credentials({ onNavigateTab }) {
                     className="accent-purple-600 w-4 h-4 flex-shrink-0 mt-0.5"
                   />
                   <div className="flex-1 min-w-0 space-y-1.5">
-                    <div className="text-sm font-medium text-white break-all leading-snug">
+                    <div className="text-sm font-medium text-ink break-all leading-snug">
                       {cred.email}
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -747,7 +747,7 @@ export default function Credentials({ onNavigateTab }) {
               <button
                 onClick={() => openQuotaModal(quotaModal.email)}
                 disabled={busyFiles.has(quotaModal.email)}
-                className="w-full text-xs text-gray-400 hover:text-white py-2 rounded-lg bg-dark-700 hover:bg-dark-600 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full text-xs text-gray-400 hover:text-ink py-2 rounded-lg bg-dark-700 hover:bg-dark-600 flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 <RefreshCw size={12} className={busyFiles.has(quotaModal.email) ? "animate-spin" : ""} />
                 Segarkan Kuota
@@ -762,7 +762,7 @@ export default function Credentials({ onNavigateTab }) {
       {/* Modal Detail Kesalahan */}
       {errorModal && (
         <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 !m-0 bg-black/60 flex items-center justify-center p-4 z-50"
           onClick={() => setErrorModal(null)}
         >
           <div
@@ -776,7 +776,7 @@ export default function Credentials({ onNavigateTab }) {
               </h3>
               <button
                 onClick={() => setErrorModal(null)}
-                className="text-gray-400 hover:text-white flex-shrink-0"
+                className="text-gray-400 hover:text-ink flex-shrink-0"
               >
                 ✕
               </button>

@@ -231,7 +231,7 @@ print(response.choices[0].message.content)
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-dark-800 border border-purple-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-purple-500/15 via-indigo-500/10 to-dark-900 border border-purple-500/30 rounded-2xl p-6 shadow-card relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -240,7 +240,7 @@ print(response.choices[0].message.content)
               </span>
               <span className="text-xs text-gray-400">OpenAI Compatible Endpoint</span>
             </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-ink tracking-tight flex items-center gap-2">
               Preset Export Coding Agent
             </h2>
             <p className="text-sm text-gray-300 mt-1 max-w-2xl leading-relaxed">
@@ -277,7 +277,7 @@ print(response.choices[0].message.content)
               className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all text-left ${
                 urlMode === "local"
                   ? "bg-purple-600/20 border-purple-500 text-purple-200"
-                  : "bg-dark-800 border-dark-600 text-gray-400 hover:text-white"
+                  : "bg-dark-800 border-dark-600 text-gray-400 hover:text-ink"
               }`}
             >
               <div className="font-semibold">Local (127.0.0.1)</div>
@@ -289,7 +289,7 @@ print(response.choices[0].message.content)
               className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all text-left ${
                 urlMode === "origin"
                   ? "bg-purple-600/20 border-purple-500 text-purple-200"
-                  : "bg-dark-800 border-dark-600 text-gray-400 hover:text-white"
+                  : "bg-dark-800 border-dark-600 text-gray-400 hover:text-ink"
               }`}
             >
               <div className="font-semibold">Web Host ({window.location.hostname})</div>
@@ -303,7 +303,7 @@ print(response.choices[0].message.content)
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
               placeholder="http://domain-atau-ip:7861/"
-              className="w-full px-3 py-1.5 text-xs bg-dark-900 border border-dark-600 rounded-lg text-white"
+              className="w-full px-3 py-1.5 text-xs bg-dark-900 border border-dark-600 rounded-lg text-ink"
             />
           )}
         </div>
@@ -317,7 +317,7 @@ print(response.choices[0].message.content)
             </label>
             <button
               onClick={() => setShowPassword(!showPassword)}
-              className="text-gray-400 hover:text-white text-xs flex items-center gap-1"
+              className="text-gray-400 hover:text-ink text-xs flex items-center gap-1"
             >
               {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
               {showPassword ? "Sembunyikan" : "Tampilkan"}
@@ -354,7 +354,7 @@ print(response.choices[0].message.content)
           <select
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
-            className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-xs text-white focus:outline-none focus:border-purple-500"
+            className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-xs text-ink focus:outline-none focus:border-purple-500"
           >
             {(configData.models || []).map((m) => (
               <option key={m.id} value={m.id}>
@@ -412,7 +412,7 @@ print(response.choices[0].message.content)
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                     <Code2 className="text-purple-400" size={18} />
                     Konfigurasi Cursor IDE
                   </h3>
@@ -501,7 +501,7 @@ print(response.choices[0].message.content)
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                     <Terminal className="text-purple-400" size={18} />
                     Anthropic Claude Code CLI
                   </h3>
@@ -554,7 +554,7 @@ print(response.choices[0].message.content)
                 </pre>
               </div>
 
-              <div className="bg-purple-900/20 border border-purple-500/20 rounded-xl p-3.5 text-xs text-gray-300 flex items-start gap-2.5">
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3.5 text-xs text-gray-300 flex items-start gap-2.5">
                 <Sparkles size={16} className="text-purple-400 flex-shrink-0 mt-0.5" />
                 <p>
                   <strong>Tips Claude Code:</strong> Anda dapat menggunakan model <code>claude-sonnet-4-6</code> atau <code>gemini-3.8-flash-high</code>. AGYBridge secara transparan menerjemahkan format request dan response sehingga semua fitur Claude Code CLI berjalan mulus.
@@ -570,7 +570,7 @@ print(response.choices[0].message.content)
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                     <Layers className="text-purple-400" size={18} />
                     Cline &amp; Roo Code (VS Code Extension)
                   </h3>
@@ -600,7 +600,7 @@ print(response.choices[0].message.content)
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="bg-dark-900 border border-dark-700 p-3 rounded-lg">
                   <div className="text-gray-500 mb-1">API Provider:</div>
-                  <div className="font-semibold text-white">OpenAI-Compatible</div>
+                  <div className="font-semibold text-ink">OpenAI-Compatible</div>
                 </div>
                 <div className="bg-dark-900 border border-dark-700 p-3 rounded-lg">
                   <div className="text-gray-500 mb-1">Base URL:</div>
@@ -635,7 +635,7 @@ print(response.choices[0].message.content)
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                     <Cpu className="text-purple-400" size={18} />
                     Continue.dev (VS Code &amp; JetBrains)
                   </h3>
@@ -681,7 +681,7 @@ print(response.choices[0].message.content)
             {/* Aider CLI */}
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                   <Sparkles className="text-amber-400" size={18} />
                   Aider AI Pair Programming
                 </h3>
@@ -701,7 +701,7 @@ print(response.choices[0].message.content)
             {/* Python OpenAI SDK */}
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                   <Code2 className="text-purple-400" size={18} />
                   Python (OpenAI SDK)
                 </h3>
@@ -730,7 +730,7 @@ print(response.choices[0].message.content)
             {/* cURL API Direct */}
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                   <Terminal className="text-blue-400" size={18} />
                   Direct cURL Request
                 </h3>

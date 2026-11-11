@@ -388,11 +388,11 @@ export default function UsageLogs() {
 
       {/* Modal Rincian Permintaan */}
       {detail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setDetail(null)}>
+        <div className="fixed inset-0 z-50 !m-0 flex items-center justify-center p-4 bg-black/60" onClick={() => setDetail(null)}>
           <div className="card max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-purple-400">Rincian Permintaan</h3>
-              <button onClick={() => setDetail(null)} className="text-gray-400 hover:text-white">✕</button>
+              <button onClick={() => setDetail(null)} className="text-gray-400 hover:text-ink">✕</button>
             </div>
             <div className="space-y-2 text-sm">
               {[
@@ -447,7 +447,7 @@ export default function UsageLogs() {
 
       {/* Modal Detail Payload Log */}
       {detailBody && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70" onClick={() => setDetailBody(null)}>
+        <div className="fixed inset-0 z-[60] !m-0 flex items-center justify-center p-4 bg-black/70" onClick={() => setDetailBody(null)}>
           <div className="card max-w-4xl w-full max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {detailBody.__missing ? (
               <div className="py-8 text-center text-sm text-gray-400">
@@ -465,7 +465,7 @@ export default function UsageLogs() {
                     <button onClick={copyDetailBody} className="btn btn-secondary text-xs px-3 py-1.5">
                       Salin JSON
                     </button>
-                    <button onClick={() => setDetailBody(null)} className="text-gray-400 hover:text-white">✕</button>
+                    <button onClick={() => setDetailBody(null)} className="text-gray-400 hover:text-ink">✕</button>
                   </div>
                 </div>
                 <div className="space-y-3 text-xs">

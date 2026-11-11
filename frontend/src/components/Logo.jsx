@@ -10,15 +10,15 @@ export default function Logo({ size = 28, className = "" }) {
     >
       <defs>
         <linearGradient id="agyLeftWing" x1="5.5" y1="25.5" x2="16" y2="5.5" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#7c3aed" />
-          <stop offset="1" stopColor="#a855f7" />
+          <stop stopColor="#2f49d1" />
+          <stop offset="1" stopColor="#4f6df5" />
         </linearGradient>
         <linearGradient id="agyRightWing" x1="16" y1="5.5" x2="26.5" y2="25.5" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#a855f7" />
+          <stop stopColor="#4f6df5" />
           <stop offset="1" stopColor="#38bdf8" />
         </linearGradient>
         <linearGradient id="agyCoreBeam" x1="11" y1="19.5" x2="21" y2="19.5" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#c084fc" />
+          <stop stopColor="#7c93ff" />
           <stop offset="1" stopColor="#38bdf8" />
         </linearGradient>
         <filter id="agyGlow" x="-20%" y="-20%" width="140%" height="140%">

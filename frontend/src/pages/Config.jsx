@@ -63,7 +63,7 @@ function CsvNumbersField({ value, onChange, placeholder }) {
       onChange={handleChange}
       onBlur={handleBlur}
       placeholder={placeholder}
-      className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-white placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500 transition-colors"
+      className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-ink placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500 transition-colors"
     />
   );
 }
@@ -102,7 +102,7 @@ function LinesField({ value, onChange, placeholder }) {
       }}
       placeholder={placeholder}
       rows={5}
-      className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
+      className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-ink placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
     />
   );
 }
@@ -539,7 +539,7 @@ export default function Config() {
             <button
               type="button"
               onClick={() => togglePasswordVisibility(field.key)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink"
             >
               {isVisible ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
@@ -617,7 +617,7 @@ export default function Config() {
                 value={rule[0]}
                 onChange={(e) => updateRule(idx, 0, e.target.value)}
                 placeholder="Pola Regex Klien (cth: ^gpt-4o$)"
-                className="flex-1 min-w-0 px-3.5 py-2 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono"
+                className="flex-1 min-w-0 px-3.5 py-2 bg-dark-900 border border-dark-600 rounded-xl text-xs text-ink placeholder-gray-500 font-mono"
               />
               <span className="text-purple-400 text-sm shrink-0 font-bold">→</span>
               <input
@@ -625,7 +625,7 @@ export default function Config() {
                 value={rule[1]}
                 onChange={(e) => updateRule(idx, 1, e.target.value)}
                 placeholder="Model Target (cth: gemini-3.8-flash-high)"
-                className="flex-1 min-w-0 px-3.5 py-2 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono"
+                className="flex-1 min-w-0 px-3.5 py-2 bg-dark-900 border border-dark-600 rounded-xl text-xs text-ink placeholder-gray-500 font-mono"
               />
               <button
                 type="button"
@@ -670,7 +670,7 @@ export default function Config() {
           )
         }
         placeholder={field.placeholder}
-        className="w-full max-w-lg px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+        className="w-full max-w-lg px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-ink placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
       />
     );
   };
@@ -678,14 +678,14 @@ export default function Config() {
   return (
     <div className="space-y-6">
       {/* Header Sticky Action Bar */}
-      <div className="sticky top-[73px] z-20 bg-dark-900/95 backdrop-blur-md border border-dark-700/80 rounded-2xl p-4 shadow-xl">
+      <div className="sticky top-[73px] z-20 bg-dark-900/95 backdrop-blur-md border border-dark-700/80 rounded-2xl p-4 shadow-card">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
               <Sliders size={18} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">Pengaturan Gateway</h2>
+              <h2 className="text-base font-bold text-ink tracking-tight">Pengaturan Gateway</h2>
               <p className="text-xs text-gray-400">Konfigurasi jaringan, keamanan, rotasi akun, dan perilaku model</p>
             </div>
           </div>
@@ -740,7 +740,7 @@ export default function Config() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari pengaturan..."
-              className="w-full pl-8 pr-3 py-1.5 bg-dark-800 border border-dark-600 rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+              className="w-full pl-8 pr-3 py-1.5 bg-dark-800 border border-dark-600 rounded-lg text-xs text-ink placeholder-gray-500 focus:outline-none focus:border-purple-500"
             />
           </div>
         </div>
@@ -783,7 +783,7 @@ export default function Config() {
               <div key={group.title} className="card p-6 space-y-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-dark-700 gap-2">
                   <div>
-                    <h3 className="text-base font-bold text-white tracking-tight">{group.title}</h3>
+                    <h3 className="text-base font-bold text-ink tracking-tight">{group.title}</h3>
                     {group.description && (
                       <p className="text-xs text-gray-400 mt-0.5">{group.description}</p>
                     )}

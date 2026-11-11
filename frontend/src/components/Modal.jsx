@@ -21,7 +21,7 @@ export default function Modal({ type = "info", title, children, onClose }) {
   }[type] || {};
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+    <div className="fixed inset-0 z-50 !m-0 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
       <div
         className={`card max-w-md w-full border ${styles.border} p-0 overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
@@ -31,7 +31,7 @@ export default function Modal({ type = "info", title, children, onClose }) {
             <span className={`p-1.5 rounded-lg ${styles.iconBg}`}>{styles.icon}</span>
             <h3 className="text-sm font-semibold text-gray-200">{title}</h3>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-ink">
             <X size={16} />
           </button>
         </div>

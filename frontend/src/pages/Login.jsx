@@ -33,7 +33,7 @@ export default function Login({ onSuccess }) {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-purple-600/15 border border-purple-500/20 mb-4 shadow-lg shadow-purple-500/10">
             <Logo size={36} />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">AGYBridge</h1>
+          <h1 className="text-3xl font-bold text-ink tracking-tight">AGYBridge</h1>
           <p className="text-gray-400 mt-2 text-sm">Panel Kontrol Proksi API Antigravity</p>
         </div>
 
@@ -57,7 +57,7 @@ export default function Login({ onSuccess }) {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-lg text-white placeholder-gray-500 pr-12"
+                  className="w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-lg text-ink placeholder-gray-500 pr-12"
                   placeholder="Masukkan kata sandi panel kontrol"
                   required
                 />

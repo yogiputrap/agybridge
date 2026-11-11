@@ -2,9 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------ Theme tokens
+   Light is the default; `html.dark` switches every token. Colors are stored as
+   space-separated RGB channels so Tailwind opacity modifiers keep working. */
+:root {
+  --dk-950: 238 241 248; /* page background */
+  --dk-900: 255 255 255; /* card surface */
+  --dk-850: 248 249 253;
+  --dk-800: 243 245 250; /* inputs, inner surfaces */
+  --dk-700: 227 232 243; /* borders, hover */
+  --dk-600: 208 215 231; /* stronger borders */
+
+  --g-100: 15 23 42;
+  --g-200: 30 41 59;
+  --g-300: 51 65 85;
+  --g-400: 100 116 139;
+  --g-500: 109 123 146;
+  --g-600: 150 161 180;
+  --ink: 15 23 42;
+
+  --ac-200: 30 58 138;
+  --ac-300: 37 76 200;
+  --ac-400: 59 91 219;
+  --ac-500: 92 124 250;
+  --ac-600: 62 92 240;
+  --ac-700: 48 73 208;
+  --ac-800: 38 58 168;
+  --ac-900: 30 45 130;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 10px 30px rgb(40 56 120 / 0.07);
+  --shadow-pill: 0 1px 2px rgb(16 24 40 / 0.05), 0 6px 18px rgb(40 56 120 / 0.08);
+  color-scheme: light;
+}
+
+html.dark {
+  --dk-950: 2 6 23;
+  --dk-900: 15 23 42;
+  --dk-850: 21 30 51;
+  --dk-800: 30 41 59;
+  --dk-700: 51 65 85;
+  --dk-600: 71 85 105;
+
+  --g-100: 243 244 246;
+  --g-200: 229 231 235;
+  --g-300: 209 213 219;
+  --g-400: 156 163 175;
+  --g-500: 107 114 128;
+  --g-600: 75 85 99;
+  --ink: 255 255 255;
+
+  --ac-200: 199 210 254;
+  --ac-300: 165 180 252;
+  --ac-400: 130 155 255;
+  --ac-500: 92 124 250;
+  --ac-600: 62 92 240;
+  --ac-700: 48 73 208;
+  --ac-800: 38 58 168;
+  --ac-900: 30 45 130;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px rgb(0 0 0 / 0.25);
+  --shadow-pill: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 18px rgb(0 0 0 / 0.25);
+  color-scheme: dark;
+}
+
 @layer base {
   body {
-    @apply bg-dark-950 text-slate-100 font-sans antialiased selection:bg-purple-500/25 selection:text-purple-200;
+    @apply bg-dark-950 font-sans antialiased selection:bg-purple-500/25;
+    color: rgb(var(--g-200));
     letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -21,52 +85,77 @@
   }
 }
 
-/* Scrollbar Minimalis */
+/* Light theme: semantic accent colors are one step darker so they keep contrast on white. */
+html:not(.dark) .text-emerald-300,
+html:not(.dark) .text-emerald-400,
+html:not(.dark) .text-emerald-500\/80 { color: #059669; }
+html:not(.dark) .text-green-400 { color: #16a34a; }
+html:not(.dark) .text-red-300,
+html:not(.dark) .text-red-400 { color: #dc2626; }
+html:not(.dark) .text-amber-300,
+html:not(.dark) .text-amber-400 { color: #b45309; }
+html:not(.dark) .text-yellow-400 { color: #a16207; }
+html:not(.dark) .text-blue-300,
+html:not(.dark) .text-blue-400 { color: #2563eb; }
+html:not(.dark) .text-cyan-400 { color: #0e7490; }
+html:not(.dark) .text-orange-300,
+html:not(.dark) .text-orange-400 { color: #c2410c; }
+
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-dark-950;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-dark-700/80 rounded-full hover:bg-dark-600 transition-colors;
+  @apply bg-dark-600/70 rounded-full hover:bg-dark-600 transition-colors;
 }
 
-/* Input & Form Focus */
+/* Input & form focus */
 input:focus,
 textarea:focus,
 select:focus {
-  @apply outline-none ring-2 ring-purple-500/40 border-purple-500/50 transition-all;
+  @apply outline-none ring-2 ring-purple-500/30 border-purple-500/50 transition-all;
 }
 
-/* Tombol */
+input[type="checkbox"] {
+  accent-color: rgb(var(--ac-600));
+}
+
+/* Buttons: pill shaped like the reference */
 .btn {
-  @apply px-4 py-2 rounded-lg font-medium text-sm transition-all duration-150 active:scale-[0.98] select-none;
+  @apply px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-150 active:scale-[0.98] select-none;
 }
 
 .btn-primary {
-  @apply bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white shadow-sm shadow-purple-600/20;
+  @apply bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white shadow-md shadow-purple-600/25;
 }
 
 .btn-secondary {
-  @apply bg-dark-800 hover:bg-dark-700 active:bg-dark-800 text-slate-200 border border-dark-700/70 hover:border-dark-600;
+  @apply bg-dark-800 hover:bg-dark-700 active:bg-dark-800 border border-dark-700 hover:border-dark-600;
+  color: rgb(var(--g-200));
 }
 
 .btn-danger {
-  @apply bg-red-600/90 hover:bg-red-500 text-white shadow-sm shadow-red-600/20;
+  @apply bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/20;
 }
 
-/* Card Minimalis dengan Border Halus */
+.btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Cards: soft shadow, large radius */
 .card {
-  @apply bg-dark-900/90 border border-dark-700/70 rounded-xl p-5 sm:p-6 shadow-sm backdrop-blur-sm;
+  @apply bg-dark-900 border border-dark-700/60 rounded-2xl p-5 sm:p-6 shadow-card;
 }
 
-/* Table Typography */
+/* Tables */
 .table-container {
-  @apply overflow-x-auto rounded-lg border border-dark-700/80;
+  @apply overflow-x-auto rounded-2xl border border-dark-700/70;
 }
 
 table {
@@ -74,13 +163,43 @@ table {
 }
 
 th {
-  @apply bg-dark-800/80 px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider;
+  @apply bg-dark-800 px-4 py-3 text-xs font-medium text-gray-400 tracking-wide first:rounded-l-xl last:rounded-r-xl;
 }
 
 td {
-  @apply px-4 py-3 text-sm border-t border-dark-800/80 text-slate-200 font-normal;
+  @apply px-4 py-3.5 text-sm border-t border-dark-700/60 font-normal;
+  color: rgb(var(--g-200));
 }
 
 tr:hover td {
-  @apply bg-dark-800/30;
+  @apply bg-dark-800/50;
+}
+
+/* Delta pills (▲ 5%) */
+.pill {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+}
+.pill-up {
+  background: rgb(34 197 94 / 0.14);
+  color: #16a34a;
+}
+.pill-down {
+  background: rgb(239 68 68 / 0.12);
+  color: #dc2626;
+}
+html.dark .pill-up { color: #4ade80; }
+html.dark .pill-down { color: #f87171; }
+
+/* Diagonal-striped progress track (Monthly Spending Limit in the reference) */
+.stripe-track {
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgb(var(--dk-600) / 0.65) 0 3px,
+    transparent 3px 7px
+  );
+}
+
+/* Floating pill containers (top nav, icon rail) */
+.float-pill {
+  @apply bg-dark-900 shadow-pill border border-dark-700/50;
 }

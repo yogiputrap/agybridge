@@ -417,7 +417,7 @@ function TestAllTab({ models, loadingModels }) {
                       onClick={() => run([id])}
                       disabled={running}
                       title="Uji ulang model ini"
-                      className="text-gray-400 hover:text-white disabled:opacity-40"
+                      className="text-gray-400 hover:text-ink disabled:opacity-40"
                     >
                       <RefreshCw size={14} />
                     </button>
@@ -473,7 +473,7 @@ export default function Playground() {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 ${
-                tab === t.id ? "bg-dark-700 text-white" : "text-gray-400 hover:text-white"
+                tab === t.id ? "bg-dark-700 text-ink" : "text-gray-400 hover:text-ink"
               }`}
             >
               <Icon size={14} /> {t.label}

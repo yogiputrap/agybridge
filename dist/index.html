@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -13,6 +13,12 @@
       rel="stylesheet"
     />
     <script>
+      // Terapkan tema tersimpan sebelum render (default: terang)
+      try {
+        if (localStorage.getItem("theme") === "dark") document.documentElement.classList.add("dark");
+      } catch (e) {}
+    </script>
+    <script>
       // Pastikan trailing slash untuk reverse proxy subpath
       if (!location.pathname.endsWith("/")) {
         location.replace(
@@ -20,10 +26,10 @@
         );
       }
     </script>
-    <script type="module" crossorigin src="./assets/index-wOK5m5--.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BJetVaKZ.css">
+    <script type="module" crossorigin src="./assets/index-BL734wBD.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CA-Odkxg.css">
   </head>
-  <body class="dark antialiased">
+  <body class="antialiased">
     <div id="root"></div>
   </body>
 </html>

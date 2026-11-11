@@ -25,6 +25,10 @@ export default defineConfig({
         target: "http://localhost:7861",
         changeOrigin: true,
       },
+      "/playground": {
+        target: "http://localhost:7861",
+        changeOrigin: true,
+      },
       "/logs": {
         target: "http://localhost:7861",
         changeOrigin: true,

@@ -4,7 +4,7 @@ Panel Module - Aggregates all control panel routes
 
 from fastapi import APIRouter
 
-from . import auth, creds, config_routes, version, root, usage_logs
+from . import auth, creds, config_routes, version, root, usage_logs, playground
 
 
 def create_router() -> APIRouter:
@@ -17,6 +17,7 @@ def create_router() -> APIRouter:
     router.include_router(config_routes.router)
     router.include_router(version.router)
     router.include_router(usage_logs.router)
+    router.include_router(playground.router)
 
     return router
 

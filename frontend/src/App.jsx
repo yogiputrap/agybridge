@@ -7,6 +7,7 @@ import {
     Info,
     BarChart3,
     Terminal,
+    FlaskConical,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Logo from "./components/Logo";
@@ -19,6 +20,7 @@ import UploadPage from "./pages/Upload";
 import Config from "./pages/Config";
 import About from "./pages/About";
 import UsageLogs from "./pages/UsageLogs";
+import Playground from "./pages/Playground";
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(() => !!localStorage.getItem("panelToken"));
@@ -56,6 +58,7 @@ export default function App() {
     { id: "presets", label: "Preset Coding Agent", icon: Terminal },
     { id: "credentials", label: "Kelola Kredensial", icon: KeyRound },
     { id: "upload", label: "Impor Massal", icon: Upload },
+    { id: "playground", label: "Playground", icon: FlaskConical },
     { id: "usage-logs", label: "Log Permintaan", icon: BarChart3 },
     { id: "config", label: "Pengaturan", icon: Settings },
     { id: "about", label: "Tentang", icon: Info },
@@ -115,6 +118,7 @@ export default function App() {
         {activeTab === "presets" && <Presets />}
         {activeTab === "credentials" && <Credentials onNavigateTab={setActiveTab} />}
         {activeTab === "upload" && <UploadPage />}
+        {activeTab === "playground" && <Playground />}
         {activeTab === "usage-logs" && <UsageLogs />}
         {activeTab === "config" && <Config />}
         {activeTab === "about" && <About version={version} onCheckUpdate={checkUpdate} checkingUpdate={checkingUpdate} />}

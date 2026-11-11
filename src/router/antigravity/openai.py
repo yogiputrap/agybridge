@@ -163,6 +163,9 @@ async def chat_completions(
             if not chunk:
                 continue
 
+            if isinstance(chunk, bytes):
+                chunk = chunk.decode('utf-8')
+
             lines = chunk.strip().split('\n')
             for line in lines:
                 line = line.strip()
@@ -174,19 +177,13 @@ async def chat_completions(
                     return
 
                 if line.startswith("data: "):
-                    data_str = line[6:]
-                    try:
-                        gemini_chunk = json.loads(data_str)
-                        openai_chunks = convert_gemini_to_openai_stream(
-                            gemini_chunk,
-                            openai_request.model,
-                            response_id
-                        )
-
-                        for openai_chunk in openai_chunks:
-                            yield f"data: {json.dumps(openai_chunk)}\n\n"
-                    except json.JSONDecodeError:
-                        continue
+                    openai_chunk = convert_gemini_to_openai_stream(
+                        line,
+                        openai_request.model,
+                        response_id
+                    )
+                    if openai_chunk:
+                        yield openai_chunk
 
         yield "data: [DONE]\n\n"
 
@@ -234,19 +231,13 @@ async def chat_completions(
                     return
 
                 if line.startswith("data: "):
-                    data_str = line[6:]
-                    try:
-                        gemini_chunk = json.loads(data_str)
-                        openai_chunks = convert_gemini_to_openai_stream(
-                            gemini_chunk,
-                            openai_request.model,
-                            response_id
-                        )
-
-                        for openai_chunk in openai_chunks:
-                            yield f"data: {json.dumps(openai_chunk)}\n\n"
-                    except json.JSONDecodeError:
-                        continue
+                    openai_chunk = convert_gemini_to_openai_stream(
+                        line,
+                        openai_request.model,
+                        response_id
+                    )
+                    if openai_chunk:
+                        yield openai_chunk
 
         yield "data: [DONE]\n\n"
 

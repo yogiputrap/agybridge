@@ -4,6 +4,7 @@ Shared API Client Utilities: auto-ban, error retries, call result tracking, cool
 
 import asyncio
 import json
+import random
 import re
 import time
 from datetime import datetime, timezone
@@ -35,6 +36,15 @@ async def handle_auto_ban(status_code: int, email: str) -> None:
         await set_cred_disabled(email, True)
 
 
+MAX_RETRY_DELAY = 15.0
+
+
+def _backoff_delay(base_interval: float, attempt: int) -> float:
+    """Exponential backoff (base * 2^attempt) capped at MAX_RETRY_DELAY, with +-20% jitter."""
+    delay = min(base_interval * (2 ** attempt), MAX_RETRY_DELAY)
+    return delay * random.uniform(0.8, 1.2)
+
+
 async def handle_error_with_retry(
     status_code: int,
     email: str,
@@ -55,7 +65,7 @@ async def handle_error_with_retry(
                 f"[RETRY] Retrying with next credential after auto-ban "
                 f"(status {status_code}, attempt {attempt + 1}/{max_retries})"
             )
-            await asyncio.sleep(retry_interval)
+            await asyncio.sleep(_backoff_delay(retry_interval, attempt))
             return True
         return False
 
@@ -64,7 +74,7 @@ async def handle_error_with_retry(
             f"[RETRY] {status_code} error encountered, retrying "
             f"(attempt {attempt + 1}/{max_retries})"
         )
-        await asyncio.sleep(retry_interval)
+        await asyncio.sleep(_backoff_delay(retry_interval, attempt))
         return True
 
     return False

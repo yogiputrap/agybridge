@@ -73,7 +73,7 @@ async def get_usage_stats(
     """Aggregate statistics: total requests, success/failure rate, token usage, latency."""
     try:
         database = await get_database()
-        stats = await database.get_usage_stats(
+        stats = await database.usage_log_stats(
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
         )

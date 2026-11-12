@@ -585,7 +585,7 @@ async def stream_request(
             is_timeout = isinstance(e, (asyncio.TimeoutError,)) or "timeout" in type(e).__name__.lower() or "timeout" in str(e).lower()
             if is_timeout and current_file:
                 from src.account_health import mark_credential_hung
-                await mark_credential_hung(current_file, f"Stream timeout exception: {e}")
+                await mark_credential_hung(current_file, f"Stream timeout exception: {e}", model_name=model_name)
 
             log.error(f"[ANTIGRAVITY STREAM] Stream request exception: {e}, credential: {current_file}")
             if attempt < max_retries:
@@ -890,7 +890,7 @@ async def non_stream_request(
             is_timeout = isinstance(e, (asyncio.TimeoutError,)) or "timeout" in type(e).__name__.lower() or "timeout" in str(e).lower()
             if is_timeout and current_file:
                 from src.account_health import mark_credential_hung
-                await mark_credential_hung(current_file, f"Non-stream timeout exception: {e}")
+                await mark_credential_hung(current_file, f"Non-stream timeout exception: {e}", model_name=model_name)
 
             log.error(f"[ANTIGRAVITY] Non-stream request exception: {e}, credential: {current_file}")
             if attempt < max_retries:

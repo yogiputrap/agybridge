@@ -21,15 +21,28 @@ from src.storage.database import get_database
 _health_check_task: Optional[asyncio.Task] = None
 
 
-async def mark_credential_hung(email: str, reason: str = "Request timed out (silent session drop)") -> None:
+# A timed-out *request* only says that one model family is slow or overloaded, so it
+# cools that family down briefly. A failed *account probe* (token refresh / quota
+# summary) says the whole session is bad, so it keeps the long all-family cooldown.
+REQUEST_HUNG_COOLDOWN_SECONDS = 60
+ACCOUNT_HUNG_COOLDOWN_SECONDS = 300
+
+
+async def mark_credential_hung(
+    email: str,
+    reason: str = "Request timed out (silent session drop)",
+    model_name: Optional[str] = None,
+) -> None:
     """
-    Mark an account as hung and apply temporary cooldown.
-    Called when an active request times out on an account.
+    Mark an account as hung and apply a temporary cooldown.
+
+    With ``model_name`` (an active request timed out) only that model family is
+    cooled down, and not at all when this is the only active account: cooling the
+    sole account would reject every model, including ones that are healthy.
+    Without ``model_name`` (account-level probe failure) all main families are cooled.
     """
     database = await get_database()
     current_time = time.time()
-    # 5 minute cooldown for hung session to avoid hitting it again
-    cooldown_until = current_time + 300
 
     log.warning(f"[HEALTH CHECK] Marking credential as HUNG: {email} - {reason}")
     try:
@@ -38,7 +51,20 @@ async def mark_credential_hung(email: str, reason: str = "Request timed out (sil
             "health_check_error": reason[:500],
             "last_health_check": current_time,
         })
-        # Set cooldown for all main model families
+
+        if model_name:
+            states = await database.get_all_credential_states()
+            active_accounts = sum(1 for state in states.values() if not state.get("disabled"))
+            if active_accounts <= 1:
+                log.warning(
+                    f"[HEALTH CHECK] {email} is the only active account; skipping cooldown "
+                    f"for {model_name} so other models stay available"
+                )
+                return
+            await database.set_model_cooldown(email, model_name, current_time + REQUEST_HUNG_COOLDOWN_SECONDS)
+            return
+
+        cooldown_until = current_time + ACCOUNT_HUNG_COOLDOWN_SECONDS
         for group in ("gemini", "argon", "claude"):
             await database.set_model_cooldown(email, group, cooldown_until)
     except Exception as e:

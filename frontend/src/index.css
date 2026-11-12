@@ -115,15 +115,44 @@ html:not(.dark) .text-orange-400 { color: #c2410c; }
   @apply bg-dark-600/70 rounded-full hover:bg-dark-600 transition-colors;
 }
 
-/* Input & form focus */
-input:focus,
-textarea:focus,
-select:focus {
-  @apply outline-none ring-2 ring-purple-500/30 border-purple-500/50 transition-all;
+/* ------------------------------------------------------------ Forms
+   One look for every text field, textarea and native select. */
+.label {
+  @apply block text-sm font-medium text-gray-300 mb-1.5;
 }
 
-input[type="checkbox"] {
+.input {
+  @apply w-full h-10 rounded-xl bg-dark-800 border border-dark-700 px-3.5 text-sm text-ink placeholder-gray-500 transition-colors;
+}
+.input:hover:not(:disabled) {
+  @apply border-dark-600;
+}
+.input:focus {
+  @apply outline-none border-purple-500/60 ring-2 ring-purple-500/25;
+}
+.input:disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+select.input {
+  @apply appearance-none pr-9 cursor-pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
   accent-color: rgb(var(--ac-600));
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Generic focus for any raw control a page still renders */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  @apply outline-none ring-2 ring-purple-500/30;
 }
 
 /* Buttons: pill shaped like the reference */
@@ -142,6 +171,10 @@ input[type="checkbox"] {
 
 .btn-danger {
   @apply bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/20;
+}
+
+.btn-ghost {
+  @apply bg-transparent hover:bg-dark-800 text-gray-300;
 }
 
 .btn:disabled {
@@ -202,4 +235,30 @@ html.dark .pill-down { color: #f87171; }
 /* Floating pill containers (top nav, icon rail) */
 .float-pill {
   @apply bg-dark-900 shadow-pill border border-dark-700/50;
+}
+
+/* ------------------------------------------------------------ Overflow safety
+   Nothing inside the shell may widen the page: flex/grid children can shrink,
+   long unbroken strings wrap, media never exceeds its box. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+#root {
+  min-width: 0;
+}
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+pre,
+code {
+  overflow-wrap: anywhere;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0;
 }

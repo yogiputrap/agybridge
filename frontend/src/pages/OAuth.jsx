@@ -1,14 +1,14 @@
 import {
   AlertCircle,
-  ArrowRight,
   Check,
   CheckCircle2,
   ChevronDown,
   Copy,
+  Download,
   ExternalLink,
+  Info,
   KeyRound,
   Laptop,
-  Loader2,
   Plus,
   RefreshCw,
   Rocket,
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Modal from "../components/Modal";
+import { Badge, Button, Card, CardHeader, EmptyState, InfoRow, Notice, Spinner, Textarea } from "../components/ui";
 import api from "../api";
 
 export default function OAuth({ onNavigateTab }) {
@@ -156,7 +157,11 @@ export default function OAuth({ onNavigateTab }) {
 
   const copyUrl = () => {
     if (!authUrl) return;
-    navigator.clipboard.writeText(authUrl);
+    try {
+      navigator.clipboard.writeText(authUrl).catch(() => {});
+    } catch {
+      /* clipboard unavailable (insecure context) */
+    }
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
   };
@@ -185,321 +190,281 @@ export default function OAuth({ onNavigateTab }) {
     URL.revokeObjectURL(url);
   };
 
+  const FEATURES = [
+    { icon: ShieldCheck, title: "OAuth 2.0 Resmi", text: "Token langsung dari Google Cloud", tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+    { icon: Sparkles, title: "Deteksi Tier Otomatis", text: "Free, Pro, atau Ultra siap pakai", tone: "bg-purple-600/10 text-purple-500" },
+    { icon: CheckCircle2, title: "Auto Simpan DB", text: "Tanpa repot upload berkas manual", tone: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+  ];
+
+  const STEPS = [
+    "Inisialisasi Tautan Google OAuth",
+    "Menunggu Persetujuan di Jendela Google",
+    "Simpan Kredensial & Konfigurasi Akun",
+  ];
+
+  const resetButton = (
+    <Button size="sm" variant="secondary" icon={RefreshCw} onClick={resetFlow}>
+      Mulai Ulang
+    </Button>
+  );
+
+  const callbackInput = (rows) => (
+    <Textarea
+      value={callbackUrl}
+      onChange={(e) => setCallbackUrl(e.target.value)}
+      placeholder="Tempelkan URL callback di sini (misal: http://localhost:11451/?state=xxx&code=xxx...)"
+      className="font-mono text-xs break-all"
+      rows={rows}
+    />
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Banner Penjelasan Modern */}
-      <div className="bg-gradient-to-r from-orange-500/15 via-purple-500/10 to-dark-900 border border-orange-500/30 rounded-2xl p-6 shadow-card relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30 flex items-center gap-1">
-                <Rocket size={12} />
-                OAuth 2.0 Web Flow
-              </span>
-              <span className="text-xs text-gray-400">Resmi Google Antigravity</span>
-            </div>
-            <h2 className="text-2xl font-bold text-ink tracking-tight">
-              One-Click Google Authentication
-            </h2>
-            <p className="text-sm text-gray-300 max-w-2xl leading-relaxed">
-              Hubungkan akun Google Antigravity Anda hanya dengan 1-klik. Kredensial, refresh token,
-              dan Project ID otomatis diverifikasi dan langsung tersimpan ke database proxy.
-            </p>
-          </div>
-
-          {status !== "idle" && (
-            <button
-              onClick={resetFlow}
-              className="btn btn-secondary text-xs flex items-center gap-1.5 self-start md:self-center"
-            >
-              <RefreshCw size={14} />
-              Mulai Ulang
-            </button>
-          )}
-        </div>
-      </div>
-
+    <div className="space-y-4">
       {/* Modal Pesan Error jika terjadi kendala */}
       {errorMessage && (
         <Modal type="error" title="Kendala Autentikasi" onClose={() => setErrorMessage("")}>
           <div className="space-y-3">
-            <p className="text-sm text-gray-300 whitespace-pre-wrap">{errorMessage}</p>
-            <div className="text-xs text-gray-400 bg-dark-900 p-3 rounded-lg border border-dark-700">
-              💡 <strong>Solusi cepat:</strong> Jika browser tidak dapat membuka popup atau redirect gagal di remote VPS, gunakan mode <strong>Remote Callback Helper</strong> di bawah ini.
-            </div>
+            <p className="text-sm text-gray-300 whitespace-pre-wrap break-words">{errorMessage}</p>
+            <Notice tone="info" icon={Info} title="Solusi cepat">
+              Jika browser tidak dapat membuka popup atau redirect gagal di remote VPS, gunakan mode <strong>Remote Callback Helper</strong> di halaman ini.
+            </Notice>
           </div>
         </Modal>
       )}
 
-      {/* TAMPILAN STATUS: 1. IDLE (TOMBOL UTAMA 1-KLIK) */}
+      {/* 1. IDLE: tombol utama satu klik */}
       {status === "idle" && (
-        <div className="space-y-6">
-          <div className="card p-8 text-center space-y-6 bg-gradient-to-b from-dark-800 to-dark-900/90 border-purple-500/30 shadow-card">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center mx-auto shadow-lg shadow-purple-600/30">
-              <Rocket className="text-white" size={32} />
-            </div>
-
-            <div className="max-w-md mx-auto space-y-2">
-              <h3 className="text-xl font-bold text-ink">Hubungkan Akun Google Anda</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Klik tombol di bawah ini. Jendela resmi Google akan terbuka untuk meminta izin akun Antigravity. Setelah Anda setujui, akun langsung aktif tanpa unduh file JSON.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <button
-                onClick={startOneClickAuth}
-                className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50 flex items-center justify-center gap-2.5 transition-all text-sm group"
-              >
-                <Rocket size={18} className="group-hover:scale-110 transition-transform" />
-                Login dengan Akun Google (Satu Klik)
-              </button>
-
-              <button
-                onClick={() => setShowRemoteHelper(!showRemoteHelper)}
-                className="w-full sm:w-auto px-5 py-3.5 bg-dark-800 hover:bg-dark-700 border border-dark-600 text-gray-300 font-medium rounded-xl flex items-center justify-center gap-2 text-sm transition-all"
-              >
-                <Laptop size={16} />
-                Mode VPS / Remote
-                <ChevronDown
-                  size={14}
-                  className={`transition-transform ${showRemoteHelper ? "rotate-180" : ""}`}
-                />
-              </button>
-            </div>
-
-            {/* Fitur Highlights */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-dark-700/60 max-w-2xl mx-auto text-left text-xs">
-              <div className="flex items-start gap-2.5 p-2 rounded-lg bg-dark-900/50">
-                <ShieldCheck size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-semibold text-ink">OAuth 2.0 Resmi</div>
-                  <div className="text-gray-500">Token langsung dari Google Cloud</div>
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+            <Card className="lg:col-span-2 flex flex-col justify-center">
+              <div className="flex flex-col items-start gap-5">
+                <span className="w-14 h-14 rounded-full bg-purple-600/10 text-purple-500 flex items-center justify-center">
+                  <Rocket size={26} />
+                </span>
+                <div className="min-w-0 max-w-xl">
+                  <div className="mb-3">
+                    <Badge tone="accent" icon={Rocket}>OAuth 2.0 Web Flow</Badge>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink break-words">
+                    Hubungkan Akun Google Anda
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+                    Klik tombol di bawah ini. Jendela resmi Google akan terbuka untuk meminta izin akun Antigravity. Setelah Anda setujui, akun langsung aktif tanpa unduh file JSON. Kredensial, refresh token, dan Project ID diverifikasi otomatis.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="primary" size="lg" icon={Rocket} onClick={startOneClickAuth} className="!whitespace-normal text-center">
+                    Login dengan Akun Google (Satu Klik)
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    icon={Laptop}
+                    onClick={() => setShowRemoteHelper(!showRemoteHelper)}
+                    aria-expanded={showRemoteHelper}
+                  >
+                    Mode VPS / Remote
+                    <ChevronDown size={14} className={`transition-transform ${showRemoteHelper ? "rotate-180" : ""}`} />
+                  </Button>
                 </div>
               </div>
+            </Card>
 
-              <div className="flex items-start gap-2.5 p-2 rounded-lg bg-dark-900/50">
-                <Sparkles size={16} className="text-purple-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-semibold text-ink">Deteksi Tier Otomatis</div>
-                  <div className="text-gray-500">Free, Pro, atau Ultra siap pakai</div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 p-2 rounded-lg bg-dark-900/50">
-                <CheckCircle2 size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-semibold text-ink">Auto Simpan DB</div>
-                  <div className="text-gray-500">Tanpa repot upload berkas manual</div>
-                </div>
-              </div>
-            </div>
+            <Card>
+              <CardHeader title="Kenapa lewat OAuth?" subtitle="Cara tercepat menambah akun." />
+              <ul className="space-y-4">
+                {FEATURES.map((f) => (
+                  <li key={f.title} className="flex items-start gap-3 min-w-0">
+                    <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${f.tone}`}>
+                      <f.icon size={18} />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-ink">{f.title}</div>
+                      <div className="text-sm text-gray-400">{f.text}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
           </div>
 
-          {/* Remote / VPS Helper Collapsible */}
+          {/* Remote / VPS Helper */}
           {showRemoteHelper && (
-            <div className="card p-5 space-y-4 border-dark-600 bg-dark-850">
-              <div className="flex items-center gap-2">
-                <Laptop size={18} className="text-indigo-400" />
-                <h4 className="font-semibold text-ink text-sm">
-                  Panduan Autentikasi Remote VPS (Jika Browser Laptop Menampilkan Koneksi Gagal)
-                </h4>
-              </div>
-
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Saat Anda mengakses AGYBridge di VPS melalui IP publik, Google akan mencoba mengarahkan callback kembali ke <code>http://localhost:11451</code> di laptop Anda. Salin tautan dari address bar jendela tersebut lalu tempel di bawah ini:
-              </p>
-
-              <div className="space-y-3">
-                <textarea
-                  value={callbackUrl}
-                  onChange={(e) => setCallbackUrl(e.target.value)}
-                  placeholder="Tempelkan URL callback di sini (misal: http://localhost:11451/?state=xxx&code=xxx...)"
-                  className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-ink placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
-                  rows={3}
-                />
-
-                <button
-                  onClick={processCallbackUrl}
-                  className="btn btn-primary text-xs flex items-center gap-2"
-                >
-                  <Rocket size={14} />
-                  Proses &amp; Simpan dari URL Callback
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAMPILAN STATUS: 2. AUTHENTICATING (PROGRESS ANIMASI) */}
-      {status === "authenticating" && (
-        <div className="card p-8 space-y-6 text-center max-w-xl mx-auto border-purple-500/40 shadow-card">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-purple-500/20 animate-pulse"></div>
-            <div className="w-16 h-16 rounded-full border-4 border-purple-500 border-t-transparent animate-spin flex items-center justify-center"></div>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-lg font-bold text-ink">Menghubungkan ke Akun Google...</h3>
-            <p className="text-xs text-gray-400 max-w-md mx-auto">
-              Silakan selesaikan proses login dan persetujuan akun di jendela popup yang telah terbuka.
-            </p>
-          </div>
-
-          {/* Stepper Indikator */}
-          <div className="space-y-3 max-w-sm mx-auto text-left text-xs">
-            <div className="flex items-center gap-3 p-2.5 rounded-lg bg-dark-900 border border-dark-700">
-              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[11px]">
-                ✓
-              </span>
-              <span className="text-gray-300">1. Inisialisasi Tautan Google OAuth</span>
-            </div>
-
-            <div className="flex items-center gap-3 p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30">
-              <Loader2 size={16} className="animate-spin text-purple-400" />
-              <span className="text-purple-200 font-medium">
-                2. Menunggu Persetujuan di Jendela Google...
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3 p-2.5 rounded-lg bg-dark-900/60 border border-dark-800 text-gray-500">
-              <span className="w-5 h-5 rounded-full bg-dark-800 text-gray-500 flex items-center justify-center font-bold text-[11px]">
-                3
-              </span>
-              <span>3. Simpan Kredensial &amp; Konfigurasi Akun</span>
-            </div>
-          </div>
-
-          {/* Opsi Tautan Terbuka Manual */}
-          {authUrl && (
-            <div className="pt-4 border-t border-dark-700 space-y-3">
-              <div className="text-xs text-gray-400">
-                Jendela popup tidak muncul atau terblokir browser?
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <a
-                  href={authUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-secondary text-xs flex items-center gap-1.5"
-                >
-                  <ExternalLink size={13} />
-                  Buka di Tab Baru
-                </a>
-                <button
-                  onClick={copyUrl}
-                  className="btn btn-secondary text-xs flex items-center gap-1.5"
-                >
-                  {copiedUrl ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                  {copiedUrl ? "Tersalin!" : "Salin Tautan"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Remote URL fallback during wait */}
-          <div className="pt-2 text-center">
-            <button
-              onClick={() => setShowRemoteHelper(!showRemoteHelper)}
-              className="text-xs text-purple-400 hover:text-purple-300 underline"
-            >
-              Menggunakan Remote VPS &amp; popup gagal redirect? Klik di sini untuk tempel callback URL
-            </button>
-          </div>
-
-          {showRemoteHelper && (
-            <div className="pt-2 text-left space-y-2">
-              <textarea
-                value={callbackUrl}
-                onChange={(e) => setCallbackUrl(e.target.value)}
-                placeholder="Tempelkan URL callback di sini (http://localhost:11451/?state=xxx&code=xxx...)"
-                className="w-full px-3 py-2 bg-dark-900 border border-dark-600 rounded-lg text-xs text-ink placeholder-gray-500 font-mono"
-                rows={2}
+            <Card>
+              <CardHeader
+                icon={Laptop}
+                title="Autentikasi Remote VPS"
+                subtitle="Gunakan jika browser laptop menampilkan koneksi gagal setelah login Google."
               />
-              <button
-                onClick={processCallbackUrl}
-                className="btn btn-primary text-xs w-full py-2 flex items-center justify-center gap-1.5"
-              >
-                <Rocket size={13} />
-                Selesaikan dengan Callback URL
-              </button>
-            </div>
+              <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                Saat Anda mengakses AGYBridge di VPS melalui IP publik, Google akan mencoba mengarahkan callback kembali ke{" "}
+                <code className="rounded-md bg-dark-800 px-1.5 py-0.5 text-xs text-ink break-all">http://localhost:11451</code> di laptop Anda. Salin tautan dari address bar jendela tersebut lalu tempel di bawah ini.
+              </p>
+              <div className="space-y-3">
+                {callbackInput(3)}
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="primary" icon={Rocket} onClick={processCallbackUrl} className="!whitespace-normal text-center">
+                    Proses & Simpan dari URL Callback
+                  </Button>
+                </div>
+              </div>
+            </Card>
           )}
+        </>
+      )}
+
+      {/* 2. AUTHENTICATING: progres */}
+      {status === "authenticating" && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <Card className="lg:col-span-2">
+            <CardHeader
+              icon={Rocket}
+              title="Menghubungkan ke Akun Google..."
+              subtitle="Selesaikan login dan persetujuan akun di jendela popup yang telah terbuka."
+              action={resetButton}
+            />
+            <ol className="space-y-3">
+              {STEPS.map((label, i) => {
+                const n = i + 1;
+                const done = n < currentStep;
+                const active = n === currentStep;
+                return (
+                  <li
+                    key={label}
+                    className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm min-w-0 ${
+                      active
+                        ? "bg-purple-600/10 border-purple-500/30 text-ink font-medium"
+                        : done
+                        ? "bg-dark-800 border-dark-700/60 text-gray-300"
+                        : "bg-dark-800/50 border-dark-700/40 text-gray-500"
+                    }`}
+                  >
+                    <span
+                      className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
+                        done
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : active
+                          ? "bg-purple-600/10 text-purple-500"
+                          : "bg-dark-700 text-gray-500"
+                      }`}
+                    >
+                      {done ? <Check size={16} /> : active ? <Spinner size={16} className="text-purple-500" /> : n}
+                    </span>
+                    <span className="min-w-0 break-words">{label}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          </Card>
+
+          <Card>
+            <CardHeader
+              icon={ExternalLink}
+              title="Popup tidak muncul?"
+              subtitle="Buka tautan secara manual atau tempel callback URL."
+            />
+            <div className="space-y-4">
+              {authUrl && (
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={authUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <ExternalLink size={15} />
+                    Buka di Tab Baru
+                  </a>
+                  <Button variant="secondary" onClick={copyUrl} icon={copiedUrl ? Check : Copy}>
+                    {copiedUrl ? "Tersalin!" : "Salin Tautan"}
+                  </Button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowRemoteHelper(!showRemoteHelper)}
+                className="text-sm text-purple-500 hover:underline text-left break-words"
+              >
+                Menggunakan Remote VPS & popup gagal redirect? Klik di sini untuk tempel callback URL
+              </button>
+
+              {showRemoteHelper && (
+                <div className="space-y-3">
+                  {callbackInput(3)}
+                  <Button variant="primary" icon={Rocket} onClick={processCallbackUrl} className="w-full !whitespace-normal text-center">
+                    Selesaikan dengan Callback URL
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
       )}
 
-      {/* TAMPILAN STATUS: 3. SUCCESS (KARTU SUKSES & TINDAKAN SELANJUTNYA) */}
+      {/* 3. SUCCESS: kartu sukses & tindakan selanjutnya */}
       {status === "success" && (
-        <div className="card p-8 space-y-6 max-w-xl mx-auto border-emerald-500/40 bg-gradient-to-b from-dark-800 to-dark-900 shadow-card">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/20">
-            <CheckCircle2 size={36} />
-          </div>
-
-          <div className="text-center space-y-1">
-            <h3 className="text-xl font-bold text-ink">Akun Google Berhasil Terhubung!</h3>
-            <p className="text-xs text-gray-400">
-              Kredensial dan refresh token telah disimpan dengan aman ke database AGYBridge.
-            </p>
-          </div>
-
-          {/* Rincian Akun */}
-          <div className="bg-dark-900 border border-dark-700 rounded-xl p-4 space-y-2.5 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">Email Akun:</span>
-              <span className="font-semibold text-ink font-mono">{successData?.email || "-"}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">Langganan / Tier:</span>
-              <span className="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                {successData?.tier || "Free"}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <Card className="lg:col-span-2">
+            <div className="flex flex-col items-center text-center mb-6">
+              <span className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
+                <CheckCircle2 size={32} />
               </span>
+              <h2 className="text-2xl font-semibold tracking-tight text-ink break-words">Akun Google Berhasil Terhubung!</h2>
+              <p className="text-sm text-gray-400 mt-1.5 max-w-md">
+                Kredensial dan refresh token telah disimpan dengan aman ke database AGYBridge.
+              </p>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">Status Rotasi:</span>
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Aktif &amp; Siap Melayani Permintaan
-              </span>
+
+            <div className="rounded-2xl bg-dark-800/60 border border-dark-700/60 px-4 py-1">
+              <InfoRow label="Email Akun">
+                <span className="font-mono text-xs break-all">{successData?.email || "-"}</span>
+              </InfoRow>
+              <InfoRow label="Langganan / Tier">
+                <Badge tone="accent">{successData?.tier || "Free"}</Badge>
+              </InfoRow>
+              <InfoRow label="Status Rotasi">
+                <Badge tone="success" dot>Aktif & siap melayani permintaan</Badge>
+              </InfoRow>
             </div>
-          </div>
+          </Card>
 
-          {/* Tombol Aksi Lanjutan */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <button
-              onClick={() => onNavigateTab && onNavigateTab("credentials")}
-              className="btn btn-primary py-2.5 text-xs flex items-center justify-center gap-2"
-            >
-              <KeyRound size={15} />
-              Buka Daftar Kredensial
-            </button>
-
-            <button
-              onClick={() => onNavigateTab && onNavigateTab("presets")}
-              className="btn btn-secondary py-2.5 text-xs flex items-center justify-center gap-2"
-            >
-              <Terminal size={15} />
-              Setup di Coding Agent
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between pt-3 border-t border-dark-700 text-xs">
-            <button
-              onClick={startOneClickAuth}
-              className="text-purple-400 hover:text-purple-300 flex items-center gap-1"
-            >
-              <Plus size={14} />
-              + Hubungkan Akun Lain
-            </button>
-
-            <button
-              onClick={downloadBackupCreds}
-              className="text-gray-400 hover:text-ink flex items-center gap-1"
-            >
-              Unduh Berkas Backup JSON
-            </button>
-          </div>
+          <Card>
+            <CardHeader title="Langkah berikutnya" subtitle="Lanjutkan pengaturan akun Anda." />
+            <div className="flex flex-col gap-2">
+              <Button variant="primary" icon={KeyRound} onClick={() => onNavigateTab && onNavigateTab("credentials")} className="w-full">
+                Buka Daftar Kredensial
+              </Button>
+              <Button variant="secondary" icon={Terminal} onClick={() => onNavigateTab && onNavigateTab("presets")} className="w-full">
+                Setup di Coding Agent
+              </Button>
+            </div>
+            <div className="mt-4 pt-4 border-t border-dark-700/50 flex flex-wrap gap-2">
+              <Button variant="ghost" size="sm" icon={Plus} onClick={startOneClickAuth}>
+                Hubungkan Akun Lain
+              </Button>
+              <Button variant="ghost" size="sm" icon={Download} onClick={downloadBackupCreds}>
+                Unduh Berkas Backup JSON
+              </Button>
+            </div>
+          </Card>
         </div>
+      )}
+
+      {/* 4. ERROR: pesan lengkap tampil di modal; kartu ini menyediakan jalan keluar */}
+      {status === "error" && (
+        <Card>
+          <EmptyState
+            icon={AlertCircle}
+            title="Autentikasi belum berhasil"
+            hint="Terjadi kendala saat menghubungkan akun Google. Coba lagi, atau gunakan mode VPS / Remote jika popup tidak dapat dibuka."
+            action={
+              <Button variant="primary" icon={RefreshCw} onClick={resetFlow}>
+                Mulai Ulang
+              </Button>
+            }
+          />
+        </Card>
       )}
     </div>
   );

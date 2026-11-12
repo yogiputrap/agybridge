@@ -1,6 +1,7 @@
-import { Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import Logo from "../components/Logo";
+import { Button, Field, IconButton, Input, Notice } from "../components/ui";
 import api from "../api";
 
 export default function Login({ onSuccess }) {
@@ -26,64 +27,71 @@ export default function Login({ onSuccess }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo Minimalis */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-purple-600/15 border border-purple-500/20 mb-4 shadow-lg shadow-purple-500/10">
-            <Logo size={36} />
+    <div className="relative min-h-screen overflow-hidden flex items-center justify-center px-4 py-10">
+      {/* Soft background glows */}
+      <div aria-hidden="true" className="pointer-events-none absolute -top-40 -left-32 w-[420px] h-[420px] rounded-full bg-purple-600/10 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-40 -right-32 w-[420px] h-[420px] rounded-full bg-blue-500/10 blur-3xl" />
+
+      <div className="relative w-full max-w-md min-w-0">
+        {/* Brand */}
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="float-pill rounded-full flex items-center gap-2.5 pl-2 pr-5 py-1.5">
+            <span className="w-10 h-10 rounded-full bg-purple-600/10 flex items-center justify-center">
+              <Logo size={24} />
+            </span>
+            <span className="text-xl font-bold tracking-tight text-ink">AGYBridge</span>
           </div>
-          <h1 className="text-3xl font-bold text-ink tracking-tight">AGYBridge</h1>
-          <p className="text-gray-400 mt-2 text-sm">Panel Kontrol Proksi API Antigravity</p>
+          <p className="text-gray-400 mt-4 text-sm">Panel Kontrol Proksi API Antigravity</p>
         </div>
 
-        {/* Kartu Login */}
-        <div className="card">
-          <h2 className="text-xl font-semibold mb-6 text-center">Masuk ke Panel Kontrol</h2>
+        {/* Login card */}
+        <div className="card !p-6 sm:!p-8">
+          <div className="flex flex-col items-center text-center mb-6">
+            <span className="w-14 h-14 rounded-full bg-purple-600/10 text-purple-500 flex items-center justify-center mb-4">
+              <Lock size={24} />
+            </span>
+            <h1 className="text-2xl font-semibold text-ink tracking-tight">Masuk ke Panel Kontrol</h1>
+            <p className="text-sm text-gray-400 mt-1.5">Masukkan kata sandi untuk melanjutkan.</p>
+          </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-4">
+            <Notice tone="danger" icon={AlertCircle} className="mb-4">
               {error}
-            </div>
+            </Notice>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Kata Sandi
-              </label>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <Field label="Kata Sandi" htmlFor="login-password">
               <div className="relative">
-                <input
+                <Input
+                  id="login-password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-lg text-ink placeholder-gray-500 pr-12"
+                  className="!pr-12"
                   placeholder="Masukkan kata sandi panel kontrol"
+                  autoComplete="current-password"
                   required
                 />
-                <button
-                  type="button"
+                <IconButton
+                  icon={showPassword ? EyeOff : Eye}
+                  label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
+                  className="absolute right-1 top-1/2 -translate-y-1/2 !bg-transparent"
+                />
               </div>
-            </div>
+            </Field>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full btn btn-primary py-3 flex items-center justify-center disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-              ) : (
-                "Masuk"
-              )}
-            </button>
+            <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full">
+              Masuk
+            </Button>
           </form>
         </div>
+
+        <p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-gray-500 text-center">
+          <ShieldCheck size={14} className="shrink-0" />
+          Akses terbatas untuk administrator panel.
+        </p>
       </div>
     </div>
   );

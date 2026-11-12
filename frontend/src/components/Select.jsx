@@ -55,9 +55,9 @@ export default function Select({ value, onChange, options, className = "", disab
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={toggle}
-        className={`w-full flex items-center justify-between gap-1 text-left bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-gray-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${
-          open ? "ring-2 ring-purple-500/50 border-purple-500/50" : ""
-        } ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+        className={`w-full h-10 flex items-center justify-between gap-2 text-left bg-dark-800 border border-dark-700 rounded-xl px-3.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
+          open ? "ring-2 ring-purple-500/30 border-purple-500/50" : ""
+        } ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-dark-600"}`}
       >
         <span className="truncate">{current ? current.label : ""}</span>
         <ChevronDown
@@ -69,7 +69,7 @@ export default function Select({ value, onChange, options, className = "", disab
         <div
           role="listbox"
           style={{ maxHeight: Math.max(placement.maxHeight, 96) }}
-          className={`absolute left-0 right-0 z-20 overflow-y-auto rounded-lg border border-dark-600 bg-dark-800 py-1 shadow-xl ${
+          className={`absolute left-0 right-0 z-30 overflow-y-auto rounded-2xl border border-dark-700 bg-dark-900 p-1.5 shadow-card ${
             placement.dropUp ? "bottom-full mb-1" : "top-full mt-1"
           }`}
         >
@@ -83,10 +83,10 @@ export default function Select({ value, onChange, options, className = "", disab
                 onChange(o.value);
                 setOpen(false);
               }}
-              className={`flex w-full items-center justify-between gap-2 px-3 py-2.5 sm:py-2 text-left text-xs sm:text-sm ${
+              className={`flex w-full items-center justify-between gap-2 px-3 py-2.5 sm:py-2 rounded-xl text-left text-sm ${
                 o.value === value
-                  ? "bg-purple-600/20 text-purple-300"
-                  : "text-gray-200 hover:bg-dark-700"
+                  ? "bg-purple-600/10 text-purple-500"
+                  : "text-gray-200 hover:bg-dark-800"
               }`}
             >
               <span className="truncate">{o.label}</span>

@@ -3,22 +3,22 @@ import {
   Ban,
   BarChart3,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   Clock,
   Download,
-  Loader2,
+  KeyRound,
   Plus,
   RefreshCw,
   Rocket,
   Shield,
   Snowflake,
   Trash2,
+  Users,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import Modal from "../components/Modal";
 import Select from "../components/Select";
+import { Badge, Button, Card, CodeBlock, EmptyState, Notice, Spinner, StatCard } from "../components/ui";
 import api from "../api";
 
 export default function Credentials({ onNavigateTab }) {
@@ -316,341 +316,353 @@ export default function Credentials({ onNavigateTab }) {
     return h > 0 ? `${h}j ${m}m` : m > 0 ? `${m}m ${s}d` : `${s}d`;
   };
 
-  const tierStyle = (tier) =>
-    tier === "ultra"
-      ? "bg-red-500/10 text-red-400 border-red-500/30"
-      : tier === "pro"
-      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-      : "bg-blue-500/10 text-blue-400 border-blue-500/30";
+  const tierTone = (tier) => (tier === "ultra" ? "accent" : tier === "pro" ? "info" : "neutral");
+
+  const filtersActive =
+    statusFilter !== "all" || errorCodeFilter !== "all" || cooldownFilter !== "all" || tierFilter !== "all";
+
+  const batchBusy = busyFiles.has("__batch__");
+  const noneSelected = selected.size === 0;
+  const allSelected = selected.size === items.length && items.length > 0;
+
+  const quotaEmail = quotaModal?.email;
+  const quotaData = quotaEmail ? quotaCache[quotaEmail] : null;
+  const quotaLoading = quotaEmail ? busyFiles.has(quotaEmail) : false;
+
+  const QuotaRow = ({ label, tone, data }) => {
+    const color = getQuotaColor(data.remaining);
+    return (
+      <div>
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <Badge tone={tone}>{label}</Badge>
+          <span className={`text-sm font-semibold ${color.text}`}>{data.remaining.toFixed(1)}%</span>
+        </div>
+        <div className="bg-dark-800 border border-dark-700/60 rounded-full h-2.5 overflow-hidden">
+          <div
+            className={`h-full rounded-full ${color.bar}`}
+            style={{ width: `${Math.max(0, Math.min(data.remaining, 100))}%` }}
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4">
       {/* Modal Pesan */}
       {message && (
-        <Modal
-          type={message.type}
-          title={message.title}
-          onClose={() => setMessage(null)}
-        >
-          <span className="whitespace-pre-wrap">{message.text}</span>
+        <Modal type={message.type} title={message.title} onClose={() => setMessage(null)}>
+          <span className="whitespace-pre-wrap break-words">{message.text}</span>
         </Modal>
       )}
 
       {/* Ringkasan Statistik */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <div className="bg-dark-900 border border-dark-700/60 shadow-card rounded-2xl p-3 sm:p-4 text-center">
-          <div className="text-xl sm:text-2xl font-bold text-ink">{stats.total}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Total Akun</div>
-        </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-3 sm:p-4 text-center">
-          <div className="text-xl sm:text-2xl font-bold text-emerald-400">{stats.normal}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Aktif</div>
-        </div>
-        <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-3 sm:p-4 text-center">
-          <div className="text-xl sm:text-2xl font-bold text-red-400">{stats.disabled}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Nonaktif</div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard icon={Users} tone="accent" label="Total Akun" value={stats.total} />
+        <StatCard icon={CheckCircle} tone="success" label="Aktif" value={stats.normal} />
+        <StatCard icon={Ban} tone="danger" label="Nonaktif" value={stats.disabled} />
       </div>
 
-      {/* Tombol Aksi */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Tombol Aksi + Filter + Aksi Massal */}
+      <Card className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {onNavigateTab && (
+              <Button variant="primary" icon={Plus} onClick={() => onNavigateTab("oauth")}>
+                Tambah Akun (Google OAuth)
+              </Button>
+            )}
+            <Button icon={RefreshCw} onClick={fetchCreds} disabled={loading} loading={loading}>
+              Segarkan Status
+            </Button>
+            <Button icon={Download} onClick={downloadAll} disabled={batchBusy}>
+              Ekspor Semua (ZIP)
+            </Button>
+          </div>
           {onNavigateTab && (
-            <button
-              onClick={() => onNavigateTab("oauth")}
-              className="btn btn-primary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 shadow-md shadow-purple-600/20"
-            >
-              <Plus size={15} />
-              Tambah Akun (Google OAuth)
-            </button>
+            <Button variant="ghost" icon={Rocket} onClick={() => onNavigateTab("presets")} className="text-purple-500">
+              Preset Coding Agent
+            </Button>
           )}
-          <button
-            onClick={fetchCreds}
-            disabled={loading}
-            className="btn btn-secondary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5"
-          >
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-            Segarkan Status
-          </button>
-          <button
-            onClick={downloadAll}
-            disabled={busyFiles.has("__batch__")}
-            className="btn btn-secondary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5"
-          >
-            <Download size={15} />
-            Ekspor Semua (ZIP)
-          </button>
         </div>
 
-        {onNavigateTab && (
-          <button
-            onClick={() => onNavigateTab("presets")}
-            className="btn btn-secondary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 text-purple-300 border-purple-500/30 hover:border-purple-500/60"
-          >
-            <Rocket size={14} className="text-purple-400" />
-            Preset Coding Agent
-          </button>
-        )}
-      </div>
+        {/* Filter Kredensial */}
+        <div className="flex flex-wrap gap-2 pt-4 border-t border-dark-700/60">
+          <Select
+            value={statusFilter}
+            onChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
+            className="w-[calc(50%-0.25rem)] sm:w-44"
+            options={[
+              { value: "all", label: "Status: Semua" },
+              { value: "enabled", label: "Hanya Aktif" },
+              { value: "disabled", label: "Hanya Nonaktif" },
+            ]}
+          />
+          <Select
+            value={errorCodeFilter}
+            onChange={(v) => {
+              setErrorCodeFilter(v);
+              setPage(1);
+            }}
+            className="w-[calc(50%-0.25rem)] sm:w-44"
+            options={[
+              { value: "all", label: "Error: Semua" },
+              { value: "none", label: "Tanpa Error" },
+              { value: "400", label: "HTTP 400" },
+              { value: "403", label: "HTTP 403" },
+              { value: "429", label: "HTTP 429" },
+              { value: "500", label: "HTTP 500" },
+            ]}
+          />
+          <Select
+            value={cooldownFilter}
+            onChange={(v) => {
+              setCooldownFilter(v);
+              setPage(1);
+            }}
+            className="w-[calc(50%-0.25rem)] sm:w-44"
+            options={[
+              { value: "all", label: "Cooldown: Semua" },
+              { value: "in_cooldown", label: "Sedang CD" },
+              { value: "no_cooldown", label: "Tanpa CD" },
+            ]}
+          />
+          <Select
+            value={tierFilter}
+            onChange={(v) => {
+              setTierFilter(v);
+              setPage(1);
+            }}
+            className="w-[calc(50%-0.25rem)] sm:w-40"
+            options={[
+              { value: "all", label: "Tier: Semua" },
+              { value: "free", label: "Free" },
+              { value: "pro", label: "Pro" },
+              { value: "ultra", label: "Ultra" },
+            ]}
+          />
+          <Select
+            value={pageSize}
+            onChange={(v) => {
+              setPageSize(Number(v));
+              setPage(1);
+            }}
+            className="w-[calc(50%-0.25rem)] sm:w-36"
+            options={[20, 50, 100, 200, 500, 1000].map((n) => ({
+              value: n,
+              label: `${n} baris`,
+            }))}
+          />
+        </div>
 
-      {/* Filter Kredensial */}
-      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 text-sm">
-        <Select
-          value={statusFilter}
-          onChange={(v) => {
-            setStatusFilter(v);
-            setPage(1);
-          }}
-          className="w-full sm:w-36"
-          options={[
-            { value: "all", label: "Status: Semua" },
-            { value: "enabled", label: "Hanya Aktif" },
-            { value: "disabled", label: "Hanya Nonaktif" },
-          ]}
-        />
-        <Select
-          value={errorCodeFilter}
-          onChange={(v) => {
-            setErrorCodeFilter(v);
-            setPage(1);
-          }}
-          className="w-full sm:w-36"
-          options={[
-            { value: "all", label: "Error: Semua" },
-            { value: "none", label: "Tanpa Error" },
-            { value: "400", label: "HTTP 400" },
-            { value: "403", label: "HTTP 403" },
-            { value: "429", label: "HTTP 429" },
-            { value: "500", label: "HTTP 500" },
-          ]}
-        />
-        <Select
-          value={cooldownFilter}
-          onChange={(v) => {
-            setCooldownFilter(v);
-            setPage(1);
-          }}
-          className="w-full sm:w-36"
-          options={[
-            { value: "all", label: "Cooldown: Semua" },
-            { value: "in_cooldown", label: "Sedang CD" },
-            { value: "no_cooldown", label: "Tanpa CD" },
-          ]}
-        />
-        <Select
-          value={tierFilter}
-          onChange={(v) => {
-            setTierFilter(v);
-            setPage(1);
-          }}
-          className="w-full sm:w-32"
-          options={[
-            { value: "all", label: "Tier: Semua" },
-            { value: "free", label: "Free" },
-            { value: "pro", label: "Pro" },
-            { value: "ultra", label: "Ultra" },
-          ]}
-        />
-        <Select
-          value={pageSize}
-          onChange={(v) => {
-            setPageSize(Number(v));
-            setPage(1);
-          }}
-          className="w-full sm:w-32"
-          options={[20, 50, 100, 200, 500, 1000].map((n) => ({
-            value: n,
-            label: `${n} baris`,
-          }))}
-        />
-      </div>
-
-      {/* Aksi Massal */}
-      <div className="card p-3 sm:p-4">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-          <label className="flex items-center gap-2 text-gray-400 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={selected.size === items.length && items.length > 0}
-              onChange={toggleSelectAll}
-              className="accent-purple-600 w-4 h-4"
-            />
+        {/* Aksi Massal */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 border-t border-dark-700/60">
+          <label className="flex items-center gap-2.5 text-sm text-gray-300 cursor-pointer select-none min-h-9">
+            <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
             Pilih Semua
           </label>
-          <span className="text-gray-500 text-xs">{selected.size} akun dipilih</span>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => doBatchAction("enable")}
-              disabled={selected.size === 0 || busyFiles.has("__batch__")}
-              className="btn btn-secondary text-xs px-3 py-1.5 disabled:opacity-40"
-            >
+          <span className="text-sm text-gray-400">{selected.size} akun dipilih</span>
+          <div className="flex flex-wrap gap-2 sm:ml-auto">
+            <Button size="sm" className="min-h-9" onClick={() => doBatchAction("enable")} disabled={noneSelected || batchBusy}>
               Aktifkan Terpilih
-            </button>
-            <button
-              onClick={() => doBatchAction("disable")}
-              disabled={selected.size === 0 || busyFiles.has("__batch__")}
-              className="btn btn-secondary text-xs px-3 py-1.5 disabled:opacity-40"
-            >
+            </Button>
+            <Button size="sm" className="min-h-9" onClick={() => doBatchAction("disable")} disabled={noneSelected || batchBusy}>
               Nonaktifkan Terpilih
-            </button>
-            <button
-              onClick={() => doBatchAction("delete")}
-              disabled={selected.size === 0 || busyFiles.has("__batch__")}
-              className="btn btn-danger text-xs px-3 py-1.5 disabled:opacity-40"
-            >
+            </Button>
+            <Button size="sm" variant="danger" className="min-h-9" onClick={() => doBatchAction("delete")} disabled={noneSelected || batchBusy}>
               Hapus Terpilih
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Daftar Kartu Kredensial */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="animate-spin text-purple-500" size={28} />
-        </div>
+        <Card className="flex items-center justify-center py-12">
+          <Spinner size={28} className="text-purple-500" />
+        </Card>
       ) : items.length === 0 ? (
-        <div className="card text-center py-12 text-gray-500 text-sm">
-          Belum ada kredensial tersimpan. Silakan hubungkan akun via tab Autentikasi OAuth atau Impor Massal.
-        </div>
+        <Card>
+          <EmptyState
+            icon={KeyRound}
+            title={filtersActive ? "Tidak ada kredensial yang cocok" : "Belum ada kredensial tersimpan"}
+            hint={
+              filtersActive
+                ? "Ubah atau atur ulang filter untuk melihat akun lainnya."
+                : "Silakan hubungkan akun via tab Autentikasi OAuth atau Impor Massal."
+            }
+            action={
+              onNavigateTab && !filtersActive ? (
+                <Button variant="primary" icon={Plus} onClick={() => onNavigateTab("oauth")}>
+                  Tambah Akun (Google OAuth)
+                </Button>
+              ) : null
+            }
+          />
+        </Card>
       ) : (
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {items.map((cred) => {
             const cooldownText = getCooldownText(cred.model_cooldowns);
             const busy = busyFiles.has(cred.email);
+            const hasErrors = !!cred.error_codes?.length;
+            const initial = (cred.email || "?").trim().charAt(0).toUpperCase() || "?";
             return (
-              <div
+              <Card
                 key={cred.email}
-                className={`card p-3 sm:p-4 space-y-3 transition-colors ${
-                  cred.disabled ? "border-red-500/30" : ""
-                }`}
+                className={`!p-4 sm:!p-5 flex flex-col gap-4 transition-colors ${
+                  cred.disabled ? "!border-red-500/30" : ""
+                } ${selected.has(cred.email) ? "ring-2 ring-purple-500/30" : ""}`}
               >
                 {/* Header Kartu */}
-                <div className="flex items-start gap-2.5">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(cred.email)}
-                    onChange={() => toggleSelect(cred.email)}
-                    className="accent-purple-600 w-4 h-4 flex-shrink-0 mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0 space-y-1.5">
-                    <div className="text-sm font-medium text-ink break-all leading-snug">
+                <div className="flex items-start gap-3 min-w-0">
+                  <span
+                    className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-base font-semibold ${
+                      cred.disabled ? "bg-red-500/10 text-red-500" : "bg-purple-600/10 text-purple-500"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {initial}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-ink truncate" title={cred.email}>
                       {cred.email}
                     </div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full border ${tierStyle(cred.tier)}`}
-                      >
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <Badge tone={tierTone(cred.tier)} className="capitalize">
                         {cred.tier || "pro"}
-                      </span>
+                      </Badge>
                       {cred.disabled ? (
-                        <span className="text-red-400 text-xs flex items-center gap-1">
-                          <Ban size={12} /> Nonaktif
-                        </span>
+                        <Badge tone="danger" dot>
+                          Nonaktif
+                        </Badge>
                       ) : (
-                        <span className="text-emerald-400 text-xs flex items-center gap-1">
-                          <CheckCircle size={12} /> Aktif
-                        </span>
+                        <Badge tone="success" dot>
+                          Aktif
+                        </Badge>
                       )}
                     </div>
                   </div>
+                  <label className="w-9 h-9 -my-1 shrink-0 flex items-center justify-center cursor-pointer" title="Pilih akun">
+                    <input
+                      type="checkbox"
+                      aria-label={`Pilih ${cred.email}`}
+                      checked={selected.has(cred.email)}
+                      onChange={() => toggleSelect(cred.email)}
+                    />
+                  </label>
                 </div>
 
                 {/* Area Info */}
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center justify-between gap-2">
+                <div className="rounded-xl bg-dark-800 px-3.5 py-3 space-y-2 text-xs min-w-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-gray-400 flex items-center gap-1.5 shrink-0">
+                      <Snowflake size={13} /> Cooldown
+                    </span>
                     {cooldownText ? (
-                      <span className="text-cyan-400 flex items-center gap-1">
-                        <Snowflake size={12} /> CD {cooldownText}
-                      </span>
+                      <span className="text-cyan-400 font-medium truncate">CD {cooldownText}</span>
                     ) : (
-                      <span className="text-gray-600 flex items-center gap-1">
-                        <Clock size={12} /> Siap
-                      </span>
-                    )}
-                    {cred.error_codes?.length ? (
-                      <button
-                        onClick={() => openErrors(cred.email)}
-                        className="text-red-400 hover:text-red-300 flex items-center gap-1"
-                      >
-                        <AlertCircle size={12} />
-                        Err: {cred.error_codes.join(", ")}
-                      </button>
-                    ) : (
-                      <span className="text-gray-600 flex items-center gap-1">
-                        <CheckCircle size={12} /> Normal
-                      </span>
+                      <span className="text-gray-500 truncate">Siap</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <Clock size={12} className="flex-shrink-0" />
-                    <span className="truncate" title={formatTime(cred.last_success)}>
-                      Terakhir sukses: {formatTime(cred.last_success)}
+                  <div className="flex items-center justify-between gap-3 min-w-0">
+                    <span className="text-gray-400 flex items-center gap-1.5 shrink-0">
+                      <AlertCircle size={13} /> Error
+                    </span>
+                    {hasErrors ? (
+                      <button
+                        type="button"
+                        onClick={() => openErrors(cred.email)}
+                        className="min-w-0 max-w-full rounded-full hover:opacity-80 transition-opacity"
+                        title="Lihat detail kesalahan"
+                      >
+                        <Badge tone="danger" icon={AlertCircle}>
+                          Err: {cred.error_codes.join(", ")}
+                        </Badge>
+                      </button>
+                    ) : (
+                      <span className="text-gray-500 truncate">Normal</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-3 min-w-0">
+                    <span className="text-gray-400 flex items-center gap-1.5 shrink-0">
+                      <Clock size={13} /> Terakhir sukses
+                    </span>
+                    <span className="text-gray-300 truncate min-w-0" title={formatTime(cred.last_success)}>
+                      {formatTime(cred.last_success)}
                     </span>
                   </div>
                 </div>
 
-                {/* Grid Tombol Aksi */}
-                <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-dark-700">
-                  {busy ? (
-                    <div className="col-span-3 flex items-center justify-center py-1.5">
-                      <Loader2 size={16} className="animate-spin text-purple-400" />
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => verifyProject(cred.email)}
-                        className="text-xs px-2 py-1.5 rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-300 flex items-center justify-center gap-1"
-                        title="Verifikasi Project ID & Tier (Mengatasi error 403)"
-                      >
-                        <Shield size={13} /> Cek
-                      </button>
-                      <button
-                        onClick={() => testCredential(cred.email)}
-                        className="text-xs px-2 py-1.5 rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-300 flex items-center justify-center gap-1"
-                        title="Uji coba koneksi kredensial"
-                      >
-                        <Zap size={13} /> Uji
-                      </button>
-                      <button
-                        onClick={() => openQuotaModal(cred.email)}
-                        disabled={cred.disabled}
-                        className="text-xs px-2 py-1.5 rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-300 flex items-center justify-center gap-1 disabled:opacity-40"
-                        title="Lihat sisa kuota akun"
-                      >
-                        <BarChart3 size={13} /> Kuota
-                      </button>
-                      <button
-                        onClick={() => exportCredential(cred.email)}
-                        className="text-xs px-2 py-1.5 rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-300 flex items-center justify-center gap-1"
-                        title="Ekspor berkas JSON"
-                      >
-                        <Download size={13} /> Ekspor
-                      </button>
-                      <button
-                        onClick={() =>
-                          doAction(cred.email, cred.disabled ? "enable" : "disable")
-                        }
-                        className={`text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1 ${
-                          cred.disabled
-                            ? "bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400"
-                            : "bg-amber-600/20 hover:bg-amber-600/30 text-amber-400"
-                        }`}
-                      >
-                        {cred.disabled ? <CheckCircle size={13} /> : <Ban size={13} />}
-                        {cred.disabled ? "Aktifkan" : "Nonaktif"}
-                      </button>
-                      <button
-                        onClick={() => doAction(cred.email, "delete")}
-                        className="text-xs px-2 py-1.5 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 flex items-center justify-center gap-1"
-                        title="Hapus kredensial"
-                      >
-                        <Trash2 size={13} /> Hapus
-                      </button>
-                    </>
-                  )}
+                {/* Tombol Aksi */}
+                <div className="flex flex-wrap items-center gap-2 pt-4 mt-auto border-t border-dark-700/60">
+                  <Button
+                    size="sm"
+                    className="min-h-9"
+                    icon={Shield}
+                    disabled={busy}
+                    onClick={() => verifyProject(cred.email)}
+                    title="Verifikasi Project ID & Tier (Mengatasi error 403)"
+                  >
+                    Cek
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="min-h-9"
+                    icon={Zap}
+                    disabled={busy}
+                    onClick={() => testCredential(cred.email)}
+                    title="Uji coba koneksi kredensial"
+                  >
+                    Uji
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="min-h-9"
+                    icon={BarChart3}
+                    disabled={busy || cred.disabled}
+                    onClick={() => openQuotaModal(cred.email)}
+                    title="Lihat sisa kuota akun"
+                  >
+                    Kuota
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="min-h-9"
+                    icon={Download}
+                    disabled={busy}
+                    onClick={() => exportCredential(cred.email)}
+                    title="Ekspor berkas JSON"
+                  >
+                    Ekspor
+                  </Button>
+                  <Button
+                    size="sm"
+                    className={`min-h-9 ${cred.disabled ? "!text-emerald-600 dark:!text-emerald-400" : "!text-amber-700 dark:!text-amber-400"}`}
+                    icon={cred.disabled ? CheckCircle : Ban}
+                    disabled={busy}
+                    onClick={() => doAction(cred.email, cred.disabled ? "enable" : "disable")}
+                    title={cred.disabled ? "Aktifkan kredensial" : "Nonaktifkan kredensial"}
+                  >
+                    {cred.disabled ? "Aktifkan" : "Nonaktif"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    className="min-h-9"
+                    icon={Trash2}
+                    disabled={busy}
+                    onClick={() => doAction(cred.email, "delete")}
+                    title="Hapus kredensial"
+                  >
+                    Hapus
+                  </Button>
+                  {busy && <Spinner size={16} className="text-purple-500" />}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -658,165 +670,106 @@ export default function Credentials({ onNavigateTab }) {
 
       {/* Navigasi Halaman */}
       {total > pageSize && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500 text-xs sm:text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-gray-400 min-w-0">
             Total {total} kredensial, halaman {page} dari {totalPages}
           </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="btn btn-secondary text-xs px-3 py-1.5 disabled:opacity-40"
-            >
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" className="min-h-9" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
               Sebelumnya
-            </button>
-            <span className="text-gray-400 text-xs sm:text-sm">
+            </Button>
+            <span className="text-sm text-gray-400 px-1">
               {page} / {totalPages}
             </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="btn btn-secondary text-xs px-3 py-1.5 disabled:opacity-40"
-            >
+            <Button size="sm" className="min-h-9" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
               Berikutnya
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Modal Kuota */}
       {quotaModal && (
-        <Modal
-          type="info"
-          title={`Status Kuota Akun - ${quotaModal.email}`}
-          onClose={() => setQuotaModal(null)}
-        >
-          {busyFiles.has(quotaModal.email) ? (
-            <div className="flex items-center justify-center py-6 text-gray-500">
-              <RefreshCw size={16} className="animate-spin mr-2" />
+        <Modal type="info" title={`Status Kuota Akun - ${quotaModal.email}`} onClose={() => setQuotaModal(null)}>
+          {quotaLoading ? (
+            <div className="flex items-center justify-center gap-2 py-6 text-gray-400">
+              <Spinner size={16} />
               Memuat data kuota...
             </div>
-          ) : quotaCache[quotaModal.email]?.error ? (
-            <div className="text-center py-4 text-red-400">{quotaCache[quotaModal.email].error}</div>
-          ) : quotaCache[quotaModal.email] ? (
-            <div className="space-y-3">
-              {quotaCache[quotaModal.email].claude?.count > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-purple-400 text-sm">Claude</span>
-                    <span className={`text-sm font-medium ${getQuotaColor(quotaCache[quotaModal.email].claude.remaining).text}`}>
-                      {quotaCache[quotaModal.email].claude.remaining.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="bg-dark-600 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${getQuotaColor(quotaCache[quotaModal.email].claude.remaining).bar}`}
-                      style={{ width: `${Math.min(quotaCache[quotaModal.email].claude.remaining, 100)}%` }}
-                    />
-                  </div>
+          ) : quotaData?.error ? (
+            <Notice tone="danger" icon={AlertCircle}>
+              {quotaData.error}
+            </Notice>
+          ) : quotaData ? (
+            <div className="space-y-4">
+              {quotaData.claude?.count > 0 && <QuotaRow label="Claude" tone="accent" data={quotaData.claude} />}
+              {quotaData.gemini?.count > 0 && <QuotaRow label="Gemini" tone="info" data={quotaData.gemini} />}
+              {!quotaData.claude?.count && !quotaData.gemini?.count && (
+                <div className="text-center py-3 text-gray-400">Data kuota belum tersedia</div>
+              )}
+              {(quotaData.claude?.resetTime || quotaData.gemini?.resetTime) && (
+                <div className="text-xs text-gray-400 text-right">
+                  Waktu Reset: {quotaData.claude?.resetTime || quotaData.gemini?.resetTime}
                 </div>
               )}
-              {quotaCache[quotaModal.email].gemini?.count > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-cyan-400 text-sm">Gemini</span>
-                    <span className={`text-sm font-medium ${getQuotaColor(quotaCache[quotaModal.email].gemini.remaining).text}`}>
-                      {quotaCache[quotaModal.email].gemini.remaining.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="bg-dark-600 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${getQuotaColor(quotaCache[quotaModal.email].gemini.remaining).bar}`}
-                      style={{ width: `${Math.min(quotaCache[quotaModal.email].gemini.remaining, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-              {!quotaCache[quotaModal.email].claude?.count &&
-                !quotaCache[quotaModal.email].gemini?.count && (
-                  <div className="text-center py-3 text-gray-500">Data kuota belum tersedia</div>
-                )}
-              {(quotaCache[quotaModal.email].claude?.resetTime ||
-                quotaCache[quotaModal.email].gemini?.resetTime) && (
-                <div className="text-xs text-gray-500 text-right pt-1">
-                  Waktu Reset:{" "}
-                  {quotaCache[quotaModal.email].claude?.resetTime ||
-                    quotaCache[quotaModal.email].gemini?.resetTime}
-                </div>
-              )}
-              <button
+              <Button
+                className="w-full"
+                icon={RefreshCw}
                 onClick={() => openQuotaModal(quotaModal.email)}
-                disabled={busyFiles.has(quotaModal.email)}
-                className="w-full text-xs text-gray-400 hover:text-ink py-2 rounded-lg bg-dark-700 hover:bg-dark-600 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                disabled={quotaLoading}
               >
-                <RefreshCw size={12} className={busyFiles.has(quotaModal.email) ? "animate-spin" : ""} />
                 Segarkan Kuota
-              </button>
+              </Button>
             </div>
           ) : (
-            <div className="text-center py-4 text-gray-500">Memuat...</div>
+            <div className="text-center py-4 text-gray-400">Memuat...</div>
           )}
         </Modal>
       )}
 
       {/* Modal Detail Kesalahan */}
       {errorModal && (
-        <div
-          className="fixed inset-0 !m-0 bg-black/60 flex items-center justify-center p-4 z-50"
-          onClick={() => setErrorModal(null)}
-        >
-          <div
-            className="bg-dark-900 border border-dark-600 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-dark-700">
-              <h3 className="font-semibold flex items-center gap-2 text-sm sm:text-base break-all">
-                <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
-                Detail Kesalahan - {errorModal.email}
-              </h3>
-              <button
-                onClick={() => setErrorModal(null)}
-                className="text-gray-400 hover:text-ink flex-shrink-0"
-              >
-                ✕
-              </button>
+        <Modal type="error" title={`Detail Kesalahan - ${errorModal.email}`} onClose={() => setErrorModal(null)}>
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm font-medium text-gray-400 mb-1.5">Kode Status Error</div>
+              <div className="flex flex-wrap gap-1.5">
+                {(errorModal.error_codes || []).length ? (
+                  errorModal.error_codes.map((c) => (
+                    <Badge key={c} tone="danger">
+                      {c}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-300">Tidak ada</span>
+                )}
+              </div>
             </div>
-            <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
-              <div>
-                <div className="text-sm text-gray-400 mb-1">Kode Status Error</div>
-                <div className="text-red-400 text-sm">
-                  {(errorModal.error_codes || []).join(", ") || "Tidak ada"}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-400 mb-1">Pesan Error</div>
-                <pre className="bg-dark-800 border border-dark-600 rounded-lg p-3 sm:p-4 text-xs text-gray-300 overflow-auto max-h-56 whitespace-pre-wrap">
-                  {JSON.stringify(errorModal.error_messages, null, 2)}
-                </pre>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => {
-                    verifyProject(errorModal.email);
-                    setErrorModal(null);
-                  }}
-                  className="btn btn-primary text-sm"
-                >
-                  Perbaiki (Sinkronisasi Project ID)
-                </button>
-                <button
-                  onClick={() => {
-                    testCredential(errorModal.email);
-                    setErrorModal(null);
-                  }}
-                  className="btn btn-secondary text-sm"
-                >
-                  Uji Kredensial
-                </button>
-              </div>
+            <div>
+              <div className="text-sm font-medium text-gray-400 mb-1.5">Pesan Error</div>
+              <CodeBlock maxHeight={224}>{JSON.stringify(errorModal.error_messages, null, 2)}</CodeBlock>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  verifyProject(errorModal.email);
+                  setErrorModal(null);
+                }}
+              >
+                Perbaiki (Sinkronisasi Project ID)
+              </Button>
+              <Button
+                onClick={() => {
+                  testCredential(errorModal.email);
+                  setErrorModal(null);
+                }}
+              >
+                Uji Kredensial
+              </Button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

@@ -1,17 +1,19 @@
 import {
+  Bot,
   CheckCircle,
   FlaskConical,
-  Loader2,
   MessageSquare,
   Play,
   RefreshCw,
   Send,
+  Settings2,
   Square,
   Trash2,
   XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Select from "../components/Select";
+import { Badge, Button, Card, CardHeader, EmptyState, Field, IconButton, Notice, Spinner, Switch, Tabs, TableShell, Textarea } from "../components/ui";
 import api from "../api";
 import { getBasePath } from "../basePath";
 
@@ -176,100 +178,115 @@ function ChatTab({ models, loadingModels, modelError }) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="card p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-        <div className="md:col-span-2">
-          <label className="block text-xs text-gray-400 mb-1">Model</label>
-          <Select
-            value={model}
-            onChange={setModel}
-            disabled={loadingModels || !models.length}
-            options={models.map((m) => ({ value: m.id, label: m.id }))}
-          />
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+      <Card className="xl:col-span-1">
+        <CardHeader icon={Settings2} title="Pengaturan" subtitle="Model dan parameter permintaan" />
+        <div className="space-y-4">
+          <Field label="Model" hint={model || undefined}>
+            <Select
+              value={model}
+              onChange={setModel}
+              disabled={loadingModels || !models.length}
+              options={models.map((m) => ({ value: m.id, label: m.id }))}
+            />
+          </Field>
+          <Field label="Maks. output">
+            <Select value={maxTokens} onChange={setMaxTokens} options={MAX_TOKEN_OPTIONS} />
+          </Field>
+          <Switch checked={stream} onChange={setStream} label="Mode streaming" />
+          <Field label="System prompt (opsional)" htmlFor="pg-system">
+            <Textarea id="pg-system" value={system} onChange={(e) => setSystem(e.target.value)} rows={3} maxLength={4000} />
+          </Field>
         </div>
-        <div>
-          <label className="block text-xs text-gray-400 mb-1">Maks. output</label>
-          <Select value={maxTokens} onChange={setMaxTokens} options={MAX_TOKEN_OPTIONS} />
-        </div>
-        <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none pb-2">
-          <input type="checkbox" checked={stream} onChange={(e) => setStream(e.target.checked)} />
-          Mode streaming
-        </label>
-        <div className="md:col-span-4">
-          <label className="block text-xs text-gray-400 mb-1">System prompt (opsional)</label>
-          <textarea
-            value={system}
-            onChange={(e) => setSystem(e.target.value)}
-            rows={2}
-            maxLength={4000}
-            className="w-full bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-          />
-        </div>
-      </div>
+      </Card>
 
-      {modelError && <div className="card p-3 text-sm text-red-400">{modelError}</div>}
+      <div className="xl:col-span-2 space-y-4 min-w-0">
+        {modelError && <Notice tone="danger">{modelError}</Notice>}
 
-      <div className="card p-4 space-y-3 min-h-[240px] max-h-[55vh] overflow-y-auto">
-        {messages.length === 0 && (
-          <div className="text-sm text-gray-500 text-center py-10">
-            Pilih model lalu kirim pesan untuk menguji. Pesan ini lewat jalur yang sama dengan klien API.
-          </div>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${
-                m.role === "user" ? "bg-purple-600 text-white" : "bg-dark-800 border border-dark-600 text-gray-200"
-              }`}
-            >
-              {m.reasoning ? (
-                <details className="mb-2 text-xs text-gray-400">
-                  <summary className="cursor-pointer select-none">Thinking ({m.reasoning.length} karakter)</summary>
-                  <div className="mt-1 whitespace-pre-wrap">{m.reasoning}</div>
-                </details>
-              ) : null}
-              {m.content || (m.pending ? <Loader2 size={14} className="animate-spin text-gray-400" /> : "")}
-              {m.meta && (
-                <div className="mt-1 text-[11px] text-gray-500">
-                  {m.meta.first_token_ms != null ? `TTFT ${m.meta.first_token_ms} ms · ` : ""}
-                  total {m.meta.total_ms} ms
-                </div>
-              )}
+        <Card className="!p-0 flex flex-col overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-4 border-b border-dark-700/60">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="w-10 h-10 shrink-0 rounded-full bg-purple-600/10 text-purple-500 flex items-center justify-center">
+                <MessageSquare size={18} />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-ink leading-tight">Percakapan</h2>
+                <p className="text-sm text-gray-400 truncate" title={model}>{model || "Belum ada model"}</p>
+              </div>
             </div>
+            <Button size="sm" icon={Trash2} onClick={clear} title="Bersihkan percakapan">
+              Bersihkan
+            </Button>
           </div>
-        ))}
-        <div ref={endRef} />
-      </div>
 
-      {error && <div className="card p-3 text-sm text-red-400 break-words">{error}</div>}
+          <div className="px-4 sm:px-5 py-5 space-y-4 min-h-[320px] max-h-[60vh] overflow-y-auto">
+            {messages.length === 0 && (
+              <EmptyState
+                icon={Bot}
+                title="Mulai percakapan"
+                hint="Pilih model lalu kirim pesan untuk menguji. Pesan ini lewat jalur yang sama dengan klien API."
+              />
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[88%] sm:max-w-[80%] min-w-0 px-4 py-3 text-sm whitespace-pre-wrap break-words ${
+                    m.role === "user"
+                      ? "bg-purple-600 text-white rounded-2xl rounded-br-md"
+                      : "bg-dark-800 border border-dark-700/60 text-ink rounded-2xl rounded-bl-md"
+                  }`}
+                >
+                  {m.reasoning ? (
+                    <details className="mb-2 rounded-xl bg-dark-900/60 border border-dark-700/60 px-3 py-2 text-xs text-gray-400">
+                      <summary className="cursor-pointer select-none">Thinking ({m.reasoning.length} karakter)</summary>
+                      <div className="mt-2 whitespace-pre-wrap break-words">{m.reasoning}</div>
+                    </details>
+                  ) : null}
+                  {m.content || (m.pending ? <Spinner size={14} /> : "")}
+                  {m.meta && (
+                    <div className={`mt-2 text-xs ${m.role === "user" ? "text-white/70" : "text-gray-500"}`}>
+                      {m.meta.first_token_ms != null ? `TTFT ${m.meta.first_token_ms} ms · ` : ""}
+                      total {m.meta.total_ms} ms
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={endRef} />
+          </div>
 
-      <div className="flex gap-2 items-end">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          rows={2}
-          maxLength={8000}
-          placeholder="Tulis pesan… (Enter kirim, Shift+Enter baris baru)"
-          className="flex-1 bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-        />
-        {busy ? (
-          <button onClick={stop} className="btn btn-danger flex items-center gap-1.5">
-            <Square size={14} /> Stop
-          </button>
-        ) : (
-          <button onClick={send} disabled={!input.trim() || !model} className="btn btn-primary flex items-center gap-1.5">
-            <Send size={14} /> Kirim
-          </button>
-        )}
-        <button onClick={clear} className="btn btn-secondary flex items-center gap-1.5" title="Bersihkan percakapan">
-          <Trash2 size={14} />
-        </button>
+          {error && (
+            <div className="px-4 sm:px-5 pb-3">
+              <Notice tone="danger">{error}</Notice>
+            </div>
+          )}
+
+          <div className="border-t border-dark-700/60 bg-dark-800/40 p-4 flex flex-wrap items-end gap-3">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              rows={2}
+              maxLength={8000}
+              placeholder="Tulis pesan… (Enter kirim, Shift+Enter baris baru)"
+              className="flex-1 min-w-[200px] !h-[72px] !resize-none"
+            />
+            {busy ? (
+              <Button variant="danger" icon={Square} onClick={stop}>
+                Stop
+              </Button>
+            ) : (
+              <Button variant="primary" icon={Send} onClick={send} disabled={!input.trim() || !model}>
+                Kirim
+              </Button>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );
@@ -341,94 +358,103 @@ function TestAllTab({ models, loadingModels }) {
   const okCount = done.filter((r) => r.ok).length;
 
   return (
-    <div className="space-y-4">
-      <div className="card p-4 flex flex-wrap items-center gap-3">
-        <button
-          onClick={runAll}
-          disabled={running || loadingModels || !chosen.length}
-          className="btn btn-primary flex items-center gap-1.5"
-        >
-          {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-          {running ? `Menguji ${progress.done}/${progress.total}` : `Uji ${chosen.length} model`}
-        </button>
-        {running && (
-          <button onClick={() => abortRef.current?.abort()} className="btn btn-danger flex items-center gap-1.5">
-            <Square size={14} /> Batalkan
-          </button>
-        )}
-        <button onClick={() => setSelected(ids)} disabled={running} className="text-xs text-purple-300 hover:underline">
-          Pilih semua
-        </button>
-        <button onClick={() => setSelected([])} disabled={running} className="text-xs text-purple-300 hover:underline">
-          Kosongkan
-        </button>
-        {done.length > 0 && (
-          <span className="text-sm text-gray-400 ml-auto">
-            <span className="text-green-400">{okCount} berhasil</span> ·{" "}
-            <span className="text-red-400">{done.length - okCount} gagal</span>
-          </span>
-        )}
-      </div>
+    <Card>
+      <CardHeader
+        icon={FlaskConical}
+        title="Uji Semua Model"
+        subtitle="Kirim 1 request kecil ke tiap model terpilih dan lihat hasilnya."
+        action={
+          <>
+            {done.length > 0 && (
+              <>
+                <Badge tone="success" dot>{okCount} berhasil</Badge>
+                <Badge tone="danger" dot>{done.length - okCount} gagal</Badge>
+              </>
+            )}
+            <Button size="sm" onClick={() => setSelected(ids)} disabled={running}>
+              Pilih semua
+            </Button>
+            <Button size="sm" onClick={() => setSelected([])} disabled={running}>
+              Kosongkan
+            </Button>
+            {running && (
+              <Button size="sm" variant="danger" icon={Square} onClick={() => abortRef.current?.abort()}>
+                Batalkan
+              </Button>
+            )}
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Play}
+              loading={running}
+              onClick={runAll}
+              disabled={loadingModels || !chosen.length}
+            >
+              {running ? `Menguji ${progress.done}/${progress.total}` : `Uji ${chosen.length} model`}
+            </Button>
+          </>
+        }
+      />
 
-      {error && <div className="card p-3 text-sm text-red-400 break-words">{error}</div>}
+      {error && <Notice tone="danger" className="mb-4">{error}</Notice>}
 
-      <div className="card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-gray-500 border-b border-dark-700">
-              <th className="p-3 w-8"></th>
-              <th className="p-3">Model</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Latensi</th>
-              <th className="p-3">Balasan / Error</th>
-              <th className="p-3 w-10"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {ids.map((id) => {
-              const r = results[id];
-              return (
-                <tr key={id} className="border-b border-dark-800 last:border-0">
-                  <td className="p-3">
-                    <input type="checkbox" checked={chosen.includes(id)} onChange={() => toggle(id)} disabled={running} />
-                  </td>
-                  <td className="p-3 font-mono text-xs break-all">{id}</td>
-                  <td className="p-3 whitespace-nowrap">
-                    {!r && running && chosen.includes(id) ? (
-                      <span className="text-gray-500">menunggu…</span>
-                    ) : !r ? (
-                      <span className="text-gray-600">-</span>
-                    ) : r.ok ? (
-                      <span className="flex items-center gap-1 text-green-400">
-                        <CheckCircle size={14} /> OK
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-red-400">
-                        <XCircle size={14} /> {r.status_code}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 whitespace-nowrap text-gray-400">{r ? `${r.latency_ms} ms` : ""}</td>
-                  <td className="p-3 text-xs text-gray-400 break-words max-w-xs">
-                    {r ? (r.ok ? r.reply : r.error) : ""}
-                  </td>
-                  <td className="p-3">
-                    <button
-                      onClick={() => run([id])}
-                      disabled={running}
-                      title="Uji ulang model ini"
-                      className="text-gray-400 hover:text-ink disabled:opacity-40"
-                    >
-                      <RefreshCw size={14} />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      {ids.length === 0 ? (
+        <EmptyState icon={FlaskConical} title="Belum ada model" hint="Tekan Muat Model untuk mengambil daftar model." />
+      ) : (
+        <TableShell>
+          <table className="w-full text-sm min-w-[760px]">
+            <thead>
+              <tr className="text-left text-sm text-gray-400 bg-dark-800/60">
+                <th className="px-4 py-3 w-12"></th>
+                <th className="px-4 py-3 font-medium">Model</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Latensi</th>
+                <th className="px-4 py-3 font-medium">Balasan / Error</th>
+                <th className="px-4 py-3 w-12"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {ids.map((id) => {
+                const r = results[id];
+                return (
+                  <tr key={id} className="border-t border-dark-700/50 align-middle hover:bg-dark-800/40">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Pilih ${id}`}
+                        className="w-4 h-4 accent-purple-600 cursor-pointer"
+                        checked={chosen.includes(id)}
+                        onChange={() => toggle(id)}
+                        disabled={running}
+                      />
+                    </td>
+                    <td className="px-4 py-3 max-w-[300px] font-mono text-xs text-ink break-all">{id}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {!r && running && chosen.includes(id) ? (
+                        <Badge>menunggu…</Badge>
+                      ) : !r ? (
+                        <span className="text-gray-500">-</span>
+                      ) : r.ok ? (
+                        <Badge tone="success" icon={CheckCircle}>OK</Badge>
+                      ) : (
+                        <Badge tone="danger" icon={XCircle}>{r.status_code}</Badge>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-gray-300">{r ? `${r.latency_ms} ms` : ""}</td>
+                    <td className="px-4 py-3 text-xs text-gray-400 break-words max-w-[320px]">
+                      {r ? (r.ok ? r.reply : r.error) : ""}
+                    </td>
+                    <td className="px-4 py-3">
+                      <IconButton icon={RefreshCw} label="Uji ulang model ini" onClick={() => run([id])} disabled={running} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </TableShell>
+      )}
+    </Card>
   );
 }
 
@@ -465,30 +491,13 @@ export default function Playground() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {tabs.map((t) => {
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 ${
-                tab === t.id ? "bg-dark-700 text-ink" : "text-gray-400 hover:text-ink"
-              }`}
-            >
-              <Icon size={14} /> {t.label}
-            </button>
-          );
-        })}
-        <div className="ml-auto flex items-center gap-2 text-xs text-gray-500">
-          {models.length} model tersedia
-          <button
-            onClick={() => loadModels(true)}
-            disabled={loadingModels}
-            className="btn btn-secondary flex items-center gap-1.5"
-          >
-            <RefreshCw size={13} className={loadingModels ? "animate-spin" : ""} /> Muat Model
-          </button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs tabs={tabs} value={tab} onChange={setTab} />
+        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
+          <span>{models.length} model tersedia</span>
+          <Button size="sm" icon={RefreshCw} onClick={() => loadModels(true)} disabled={loadingModels} className={loadingModels ? "[&_svg]:animate-spin" : ""}>
+            Muat Model
+          </Button>
         </div>
       </div>
 

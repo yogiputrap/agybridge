@@ -1,24 +1,61 @@
 import {
-  AlertCircle,
-  ArrowRight,
   Check,
   Code2,
   Copy,
   Cpu,
   Download,
-  ExternalLink,
   Eye,
   EyeOff,
   Globe,
-  Laptop,
   Layers,
-  Loader2,
   RefreshCw,
   Sparkles,
   Terminal,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import api from "../api";
+import Select from "../components/Select";
+import { Button, Card, CardHeader, CodeBlock, IconButton, Input, Notice, Spinner, Switch, Tabs } from "../components/ui";
+
+/** Numbered setup steps as tidy rows with round number chips. */
+function Steps({ items }) {
+  return (
+    <ol className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-5">
+      {items.map((step, i) => (
+        <li key={step.title} className="min-w-0 flex items-start gap-3 rounded-2xl bg-dark-800 border border-dark-700/60 p-4">
+          <span className="w-7 h-7 shrink-0 rounded-full bg-purple-600 text-white text-xs font-semibold flex items-center justify-center">
+            {i + 1}
+          </span>
+          <div className="min-w-0 space-y-1">
+            <div className="text-sm font-semibold text-ink break-words">{step.title}</div>
+            <p className="text-sm text-gray-400 break-words">{step.body}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** A labelled snippet: caption + optional action on top, CodeBlock below. */
+function Snippet({ label, action, children, maxHeight = 340, className = "" }) {
+  return (
+    <div className={`min-w-0 space-y-2 ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+        <div className="text-sm text-gray-300 min-w-0 break-words">{label}</div>
+        {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
+      </div>
+      <CodeBlock maxHeight={maxHeight}>{children}</CodeBlock>
+    </div>
+  );
+}
+
+function Kbd({ children }) {
+  return <kbd className="px-1.5 py-0.5 rounded-md bg-dark-700 text-gray-300 text-xs font-mono">{children}</kbd>;
+}
+
+function Code({ children, className = "" }) {
+  return <code className={`font-mono text-xs break-all text-purple-500 ${className}`}>{children}</code>;
+}
 
 export default function Presets() {
   const [loading, setLoading] = useState(true);
@@ -222,533 +259,310 @@ print(response.choices[0].message.content)
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
-        <Loader2 className="animate-spin text-purple-500" size={32} />
+        <Spinner size={32} className="text-purple-500" />
         <p className="text-sm">Memuat preset konfigurasi agent...</p>
       </div>
     );
   }
 
+  const copyBtn = (text, key, label, variant = "secondary") => (
+    <Button size="sm" variant={variant} onClick={() => copyToClipboard(text, key)} icon={copiedKey === key ? Check : Copy}>
+      {label}
+    </Button>
+  );
+  const downloadBtn = (filename, content, label) => (
+    <Button size="sm" variant="primary" onClick={() => downloadFile(filename, content)} icon={Download}>
+      {label}
+    </Button>
+  );
+
+  const URL_MODES = [
+    { id: "local", title: "Local (127.0.0.1)", hint: "Satu PC / VPS lokal" },
+    { id: "origin", title: `Web Host (${window.location.hostname})`, hint: "Akses remote / IP publik" },
+    { id: "custom", title: "Kustom", hint: "Domain atau IP sendiri" },
+  ];
+
+  const modelOptions = (configData.models || []).map((m) => ({ value: m.id, label: `${m.name} (${m.badge})` }));
+
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-purple-500/15 via-indigo-500/10 to-dark-900 border border-purple-500/30 rounded-2xl p-6 shadow-card relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                Integrasi 1-Klik
-              </span>
-              <span className="text-xs text-gray-400">OpenAI Compatible Endpoint</span>
-            </div>
-            <h2 className="text-2xl font-bold text-ink tracking-tight flex items-center gap-2">
-              Preset Export Coding Agent
-            </h2>
-            <p className="text-sm text-gray-300 mt-1 max-w-2xl leading-relaxed">
-              Gunakan akun Google Antigravity Anda langsung di Cursor, Claude Code, Cline, Continue.dev,
-              dan tool coding lainnya tanpa konfigurasi manual yang rumit.
-            </p>
+    <div className="space-y-4">
+      {/* Pengaturan global */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="!p-5 space-y-4">
+          <CardHeader className="!mb-0" icon={Globe} title="Target Base URL" subtitle="Alamat endpoint untuk agent" />
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Target Base URL">
+            {URL_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                role="radio"
+                aria-checked={urlMode === m.id}
+                onClick={() => setUrlMode(m.id)}
+                title={m.hint}
+                className={`h-10 px-4 max-w-full rounded-full text-sm font-medium border transition-colors truncate ${
+                  urlMode === m.id
+                    ? "bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "bg-dark-800 border-dark-700 text-gray-400 hover:text-ink"
+                }`}
+              >
+                {m.title}
+              </button>
+            ))}
           </div>
-
-          <button
-            onClick={fetchPresetsConfig}
-            className="btn btn-secondary text-xs self-start md:self-center flex items-center gap-1.5"
-          >
-            <RefreshCw size={14} />
-            Segarkan Kunci
-          </button>
-        </div>
-      </div>
-
-      {/* Kontrol Konfigurasi Global */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Pilihan Host / Base URL */}
-        <div className="card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-              <Laptop size={14} className="text-purple-400" />
-              Target Base URL
-            </label>
-            <span className="text-[11px] text-gray-500">{baseUrl}</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setUrlMode("local")}
-              className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all text-left ${
-                urlMode === "local"
-                  ? "bg-purple-600/20 border-purple-500 text-purple-200"
-                  : "bg-dark-800 border-dark-600 text-gray-400 hover:text-ink"
-              }`}
-            >
-              <div className="font-semibold">Local (127.0.0.1)</div>
-              <div className="text-[10px] text-gray-500">Satu PC / VPS lokal</div>
-            </button>
-
-            <button
-              onClick={() => setUrlMode("origin")}
-              className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all text-left ${
-                urlMode === "origin"
-                  ? "bg-purple-600/20 border-purple-500 text-purple-200"
-                  : "bg-dark-800 border-dark-600 text-gray-400 hover:text-ink"
-              }`}
-            >
-              <div className="font-semibold">Web Host ({window.location.hostname})</div>
-              <div className="text-[10px] text-gray-500">Akses remote / IP publik</div>
-            </button>
-          </div>
-
           {urlMode === "custom" && (
-            <input
+            <Input
               type="text"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
               placeholder="http://domain-atau-ip:7861/"
-              className="w-full px-3 py-1.5 text-xs bg-dark-900 border border-dark-600 rounded-lg text-ink"
             />
           )}
-        </div>
+          <p className="text-xs text-gray-500 break-all" title={baseUrl}>
+            {baseUrl}
+          </p>
+        </Card>
 
-        {/* Kunci API Password */}
-        <div className="card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-              <Sparkles size={14} className="text-amber-400" />
-              API Key (Kata Sandi API)
-            </label>
-            <button
-              onClick={() => setShowPassword(!showPassword)}
-              className="text-gray-400 hover:text-ink text-xs flex items-center gap-1"
-            >
-              {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
-              {showPassword ? "Sembunyikan" : "Tampilkan"}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
+        <Card className="!p-5 space-y-4">
+          <CardHeader
+            className="!mb-0"
+            icon={Sparkles}
+            title="API Key"
+            subtitle="Kata sandi API"
+            action={
+              <Button size="sm" variant="secondary" onClick={fetchPresetsConfig} icon={RefreshCw}>
+                Segarkan Kunci
+              </Button>
+            }
+          />
+          <div className="flex items-center gap-2 min-w-0">
+            <Input
               type={showPassword ? "text" : "password"}
               readOnly
               value={apiKey}
-              className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-xs font-mono text-purple-300 select-all"
+              className="min-w-0 flex-1 font-mono text-purple-500 select-all"
             />
-            <button
+            <IconButton
+              icon={showPassword ? EyeOff : Eye}
+              label={showPassword ? "Sembunyikan" : "Tampilkan"}
+              onClick={() => setShowPassword(!showPassword)}
+            />
+            <IconButton
+              icon={copiedKey === "apiKey" ? Check : Copy}
+              label="Salin API Key"
+              tone={copiedKey === "apiKey" ? "accent" : "default"}
               onClick={() => copyToClipboard(apiKey, "apiKey")}
-              className="btn btn-secondary px-3 py-2 text-xs flex-shrink-0"
-              title="Salin API Key"
-            >
-              {copiedKey === "apiKey" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Model Default & Caveman */}
-        <div className="card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-              <Cpu size={14} className="text-emerald-400" />
-              Pilihan Model Utama
-            </label>
-            <span className="text-[10px] text-emerald-400 font-medium">Auto-Failover</span>
-          </div>
-
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-xs text-ink focus:outline-none focus:border-purple-500"
-          >
-            {(configData.models || []).map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.badge})
-              </option>
-            ))}
-          </select>
-
-          <label className="flex items-center gap-2 cursor-pointer pt-0.5 select-none text-xs text-gray-300">
-            <input
-              type="checkbox"
-              checked={enableCaveman}
-              onChange={(e) => setEnableCaveman(e.target.checked)}
-              className="rounded bg-dark-800 border-dark-600 text-purple-600 focus:ring-0 focus:ring-offset-0"
             />
-            <span>Aktifkan instruksi <strong>Caveman</strong> (Hemat token)</span>
-          </label>
-        </div>
+          </div>
+        </Card>
+
+        <Card className="!p-5 space-y-4">
+          <CardHeader className="!mb-0" icon={Cpu} title="Model Utama" subtitle="Auto-Failover" />
+          <Select value={selectedModel} onChange={setSelectedModel} options={modelOptions} />
+          <Switch
+            checked={enableCaveman}
+            onChange={setEnableCaveman}
+            label={
+              <>
+                Aktifkan instruksi <strong>Caveman</strong> (Hemat token)
+              </>
+            }
+          />
+        </Card>
       </div>
 
-      {/* Navigasi Tab Agent */}
-      <div className="flex items-center gap-2 border-b border-dark-700 pb-2 overflow-x-auto">
-        {agents.map((agent) => {
-          const Icon = agent.icon;
-          const isActive = activeAgent === agent.id;
-          return (
-            <button
-              key={agent.id}
-              onClick={() => setActiveAgent(agent.id)}
-              className={`px-4 py-2.5 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap transition-all ${
-                isActive
-                  ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
-                  : "bg-dark-800/80 hover:bg-dark-700 text-gray-400 hover:text-white border border-dark-700"
-              }`}
+      {/* Pemilih agent */}
+      <Tabs
+        tabs={agents.map((a) => ({ id: a.id, label: a.name, icon: a.icon, badge: a.badge }))}
+        value={activeAgent}
+        onChange={setActiveAgent}
+      />
+
+      {/* Konten agent */}
+      {activeAgent === "cursor" && (
+        <Card>
+          <CardHeader
+            icon={Code2}
+            title="Konfigurasi Cursor IDE"
+            subtitle="Gunakan AGYBridge sebagai OpenAI-compatible provider kustom di Cursor."
+            action={
+              <>
+                {copyBtn(cursorRulesContent, "cursorRules", "Salin .cursorrules")}
+                {downloadBtn(".cursorrules", cursorRulesContent, "Unduh .cursorrules")}
+              </>
+            }
+          />
+          <Steps
+            items={[
+              {
+                title: "Buka Settings Cursor",
+                body: (
+                  <>
+                    Tekan <Kbd>Ctrl/Cmd + Shift + J</Kbd> lalu pilih tab <strong>Models</strong>.
+                  </>
+                ),
+              },
+              {
+                title: "Override OpenAI Base URL",
+                body: (
+                  <>
+                    Aktifkan <strong>OpenAI API Key</strong>, masukkan Base URL: <Code className="block mt-1">{v1Url}</Code>
+                  </>
+                ),
+              },
+              {
+                title: "Tambah Model Kustom",
+                body: (
+                  <>
+                    Tambahkan nama model: <Code className="!text-emerald-600 dark:!text-emerald-400">{selectedModel}</Code> atau
+                    model lainnya.
+                  </>
+                ),
+              },
+            ]}
+          />
+          <div className="space-y-5">
+            <Snippet
+              label={
+                <>
+                  Pratinjau berkas <code>.cursorrules</code> (simpan di root project):
+                </>
+              }
             >
-              <Icon size={16} />
-              <span>{agent.name}</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                  isActive ? "bg-white/20 text-white" : "bg-dark-900 text-gray-400"
-                }`}
-              >
-                {agent.badge}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Konten Tab Agent */}
-      <div className="space-y-6">
-        {/* 1. CURSOR */}
-        {activeAgent === "cursor" && (
-          <div className="space-y-5">
-            <div className="card p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
-                    <Code2 className="text-purple-400" size={18} />
-                    Konfigurasi Cursor IDE
-                  </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Gunakan AGYBridge sebagai OpenAI-compatible provider kustom di Cursor.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => copyToClipboard(cursorRulesContent, "cursorRules")}
-                    className="btn btn-secondary text-xs flex items-center gap-1.5"
-                  >
-                    {copiedKey === "cursorRules" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                    Salin .cursorrules
-                  </button>
-                  <button
-                    onClick={() => downloadFile(".cursorrules", cursorRulesContent)}
-                    className="btn btn-primary text-xs flex items-center gap-1.5"
-                  >
-                    <Download size={14} />
-                    Unduh .cursorrules
-                  </button>
-                </div>
-              </div>
-
-              {/* Panduan Langkah Cursor */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div className="bg-dark-900 border border-dark-700 p-3.5 rounded-xl space-y-1">
-                  <div className="font-semibold text-purple-400 flex items-center gap-1.5">
-                    <span className="w-4 h-4 rounded-full bg-purple-600/30 text-purple-300 flex items-center justify-center text-[10px]">1</span>
-                    Buka Settings Cursor
-                  </div>
-                  <p className="text-gray-400">Tekan <kbd className="px-1 py-0.5 bg-dark-800 rounded text-gray-300">Ctrl/Cmd + Shift + J</kbd> lalu pilih tab <strong>Models</strong>.</p>
-                </div>
-
-                <div className="bg-dark-900 border border-dark-700 p-3.5 rounded-xl space-y-1">
-                  <div className="font-semibold text-purple-400 flex items-center gap-1.5">
-                    <span className="w-4 h-4 rounded-full bg-purple-600/30 text-purple-300 flex items-center justify-center text-[10px]">2</span>
-                    Override OpenAI Base URL
-                  </div>
-                  <p className="text-gray-400">Aktifkan <strong>OpenAI API Key</strong>, masukkan Base URL: <code className="text-purple-300">{v1Url}</code></p>
-                </div>
-
-                <div className="bg-dark-900 border border-dark-700 p-3.5 rounded-xl space-y-1">
-                  <div className="font-semibold text-purple-400 flex items-center gap-1.5">
-                    <span className="w-4 h-4 rounded-full bg-purple-600/30 text-purple-300 flex items-center justify-center text-[10px]">3</span>
-                    Tambah Model Kustom
-                  </div>
-                  <p className="text-gray-400">Tambahkan nama model: <code className="text-emerald-300 font-mono">{selectedModel}</code> atau model lainnya.</p>
-                </div>
-              </div>
-
-              {/* Pratinjau .cursorrules */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>Pratinjau berkas <code>.cursorrules</code> (simpan di root project):</span>
-                </div>
-                <pre className="bg-dark-900 border border-dark-700 rounded-xl p-4 text-xs font-mono text-gray-300 overflow-x-auto leading-relaxed">
-                  {cursorRulesContent}
-                </pre>
-              </div>
-
-              {/* VS Code settings snippet */}
-              <div className="space-y-2 pt-2 border-t border-dark-700">
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>Konfigurasi <code>.cursor/settings.json</code> atau <code>settings.json</code>:</span>
-                  <button
-                    onClick={() => copyToClipboard(cursorSettingsJson, "cursorSettings")}
-                    className="text-purple-400 hover:text-purple-300 flex items-center gap-1"
-                  >
-                    {copiedKey === "cursorSettings" ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                    Salin JSON
-                  </button>
-                </div>
-                <pre className="bg-dark-900 border border-dark-700 rounded-xl p-3 text-xs font-mono text-purple-300 overflow-x-auto">
-                  {cursorSettingsJson}
-                </pre>
-              </div>
-            </div>
+              {cursorRulesContent}
+            </Snippet>
+            <Snippet
+              label={
+                <>
+                  Konfigurasi <code>.cursor/settings.json</code> atau <code>settings.json</code>:
+                </>
+              }
+              action={copyBtn(cursorSettingsJson, "cursorSettings", "Salin JSON")}
+            >
+              {cursorSettingsJson}
+            </Snippet>
           </div>
-        )}
+        </Card>
+      )}
 
-        {/* 2. CLAUDE CODE */}
-        {activeAgent === "claude-code" && (
+      {activeAgent === "claude-code" && (
+        <Card>
+          <CardHeader
+            icon={Terminal}
+            title="Anthropic Claude Code CLI"
+            subtitle="Hubungkan CLI resmi Claude Code ke AGYBridge menggunakan variabel lingkungan."
+            action={
+              <>
+                {copyBtn(claudeCodeBash, "claudeBash", "Salin Bash")}
+                {downloadBtn(".env.claude", claudeCodeBash, "Unduh .env.claude")}
+              </>
+            }
+          />
           <div className="space-y-5">
-            <div className="card p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
-                    <Terminal className="text-purple-400" size={18} />
-                    Anthropic Claude Code CLI
-                  </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Hubungkan CLI resmi Claude Code ke AGYBridge menggunakan variabel lingkungan.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => copyToClipboard(claudeCodeBash, "claudeBash")}
-                    className="btn btn-secondary text-xs flex items-center gap-1.5"
-                  >
-                    {copiedKey === "claudeBash" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                    Salin Bash
-                  </button>
-                  <button
-                    onClick={() => downloadFile(".env.claude", claudeCodeBash)}
-                    className="btn btn-primary text-xs flex items-center gap-1.5"
-                  >
-                    <Download size={14} />
-                    Unduh .env.claude
-                  </button>
-                </div>
-              </div>
-
-              {/* Terminal Bash Snippet */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span className="font-semibold text-gray-300">Linux / macOS / Git Bash:</span>
-                </div>
-                <pre className="bg-dark-900 border border-dark-700 rounded-xl p-4 text-xs font-mono text-emerald-400 overflow-x-auto leading-relaxed">
-                  {claudeCodeBash}
-                </pre>
-              </div>
-
-              {/* Windows PowerShell Snippet */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span className="font-semibold text-gray-300">Windows PowerShell:</span>
-                  <button
-                    onClick={() => copyToClipboard(claudeCodePowerShell, "claudePs")}
-                    className="text-purple-400 hover:text-purple-300 flex items-center gap-1"
-                  >
-                    {copiedKey === "claudePs" ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                    Salin PowerShell
-                  </button>
-                </div>
-                <pre className="bg-dark-900 border border-dark-700 rounded-xl p-4 text-xs font-mono text-blue-300 overflow-x-auto leading-relaxed">
-                  {claudeCodePowerShell}
-                </pre>
-              </div>
-
-              <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3.5 text-xs text-gray-300 flex items-start gap-2.5">
-                <Sparkles size={16} className="text-purple-400 flex-shrink-0 mt-0.5" />
-                <p>
-                  <strong>Tips Claude Code:</strong> Anda dapat menggunakan model <code>claude-sonnet-4-6</code> atau <code>gemini-3.8-flash-high</code>. AGYBridge secara transparan menerjemahkan format request dan response sehingga semua fitur Claude Code CLI berjalan mulus.
-                </p>
-              </div>
-            </div>
+            <Snippet label={<span className="font-semibold">Linux / macOS / Git Bash:</span>}>{claudeCodeBash}</Snippet>
+            <Snippet
+              label={<span className="font-semibold">Windows PowerShell:</span>}
+              action={copyBtn(claudeCodePowerShell, "claudePs", "Salin PowerShell")}
+            >
+              {claudeCodePowerShell}
+            </Snippet>
+            <Notice tone="info" icon={Sparkles}>
+              <strong>Tips Claude Code:</strong> Anda dapat menggunakan model <code>claude-sonnet-4-6</code> atau{" "}
+              <code>gemini-3.8-flash-high</code>. AGYBridge secara transparan menerjemahkan format request dan response
+              sehingga semua fitur Claude Code CLI berjalan mulus.
+            </Notice>
           </div>
-        )}
+        </Card>
+      )}
 
-        {/* 3. CLINE / ROO CODE */}
-        {activeAgent === "cline" && (
-          <div className="space-y-5">
-            <div className="card p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
-                    <Layers className="text-purple-400" size={18} />
-                    Cline &amp; Roo Code (VS Code Extension)
-                  </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Ekstensi autonomous coding agent terbaik untuk Visual Studio Code.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => copyToClipboard(clineSettingsJson, "clineSettings")}
-                    className="btn btn-secondary text-xs flex items-center gap-1.5"
-                  >
-                    {copiedKey === "clineSettings" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                    Salin Pengaturan
-                  </button>
-                  <button
-                    onClick={() => downloadFile("cline_settings.json", clineSettingsJson)}
-                    className="btn btn-primary text-xs flex items-center gap-1.5"
-                  >
-                    <Download size={14} />
-                    Unduh JSON
-                  </button>
-                </div>
+      {activeAgent === "cline" && (
+        <Card>
+          <CardHeader
+            icon={Layers}
+            title="Cline & Roo Code (VS Code Extension)"
+            subtitle="Ekstensi autonomous coding agent terbaik untuk Visual Studio Code."
+            action={
+              <>
+                {copyBtn(clineSettingsJson, "clineSettings", "Salin Pengaturan")}
+                {downloadBtn("cline_settings.json", clineSettingsJson, "Unduh JSON")}
+              </>
+            }
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            {[
+              { label: "API Provider", value: "OpenAI-Compatible" },
+              { label: "Base URL", value: v1Url, mono: true },
+              { label: "API Key", value: showPassword ? apiKey : "••••••••••••••••", mono: true },
+              { label: "Model ID", value: selectedModel, mono: true },
+            ].map((row) => (
+              <div key={row.label} className="min-w-0 rounded-2xl bg-dark-800 border border-dark-700/60 px-4 py-3">
+                <div className="text-xs text-gray-500 mb-1">{row.label}:</div>
+                <div className={`text-sm font-semibold text-ink break-all ${row.mono ? "font-mono" : ""}`}>{row.value}</div>
               </div>
-
-              {/* Form Ringkasan Pengaturan Cline */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="bg-dark-900 border border-dark-700 p-3 rounded-lg">
-                  <div className="text-gray-500 mb-1">API Provider:</div>
-                  <div className="font-semibold text-ink">OpenAI-Compatible</div>
-                </div>
-                <div className="bg-dark-900 border border-dark-700 p-3 rounded-lg">
-                  <div className="text-gray-500 mb-1">Base URL:</div>
-                  <div className="font-mono text-purple-300 font-semibold">{v1Url}</div>
-                </div>
-                <div className="bg-dark-900 border border-dark-700 p-3 rounded-lg">
-                  <div className="text-gray-500 mb-1">API Key:</div>
-                  <div className="font-mono text-amber-300 font-semibold">{showPassword ? apiKey : "••••••••••••••••"}</div>
-                </div>
-                <div className="bg-dark-900 border border-dark-700 p-3 rounded-lg">
-                  <div className="text-gray-500 mb-1">Model ID:</div>
-                  <div className="font-mono text-emerald-300 font-semibold">{selectedModel}</div>
-                </div>
-              </div>
-
-              {/* Pratinjau JSON Pengaturan */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>Nilai konfigurasi siap tempel:</span>
-                </div>
-                <pre className="bg-dark-900 border border-dark-700 rounded-xl p-4 text-xs font-mono text-gray-300 overflow-x-auto">
-                  {clineSettingsJson}
-                </pre>
-              </div>
-            </div>
+            ))}
           </div>
-        )}
+          <Snippet label="Nilai konfigurasi siap tempel:">{clineSettingsJson}</Snippet>
+        </Card>
+      )}
 
-        {/* 4. CONTINUE.DEV */}
-        {activeAgent === "continue" && (
-          <div className="space-y-5">
-            <div className="card p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
-                    <Cpu className="text-purple-400" size={18} />
-                    Continue.dev (VS Code &amp; JetBrains)
-                  </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Asisten AI open source untuk autocomplete dan chat di editor favorit Anda.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => copyToClipboard(continueConfigJson, "continueConfig")}
-                    className="btn btn-secondary text-xs flex items-center gap-1.5"
-                  >
-                    {copiedKey === "continueConfig" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                    Salin config.json
-                  </button>
-                  <button
-                    onClick={() => downloadFile("config.json", continueConfigJson)}
-                    className="btn btn-primary text-xs flex items-center gap-1.5"
-                  >
-                    <Download size={14} />
-                    Unduh config.json
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3.5 text-xs text-gray-300">
-                Lokasi berkas: Simpan atau gabungkan ke <code>~/.continue/config.json</code> di komputer lokal Anda.
-              </div>
-
-              {/* JSON Editor continue */}
-              <div className="space-y-2">
-                <pre className="bg-dark-900 border border-dark-700 rounded-xl p-4 text-xs font-mono text-purple-300 overflow-x-auto max-h-[380px] overflow-y-auto leading-relaxed">
-                  {continueConfigJson}
-                </pre>
-              </div>
-            </div>
+      {activeAgent === "continue" && (
+        <Card>
+          <CardHeader
+            icon={Cpu}
+            title="Continue.dev (VS Code & JetBrains)"
+            subtitle="Asisten AI open source untuk autocomplete dan chat di editor favorit Anda."
+            action={
+              <>
+                {copyBtn(continueConfigJson, "continueConfig", "Salin config.json")}
+                {downloadBtn("config.json", continueConfigJson, "Unduh config.json")}
+              </>
+            }
+          />
+          <div className="space-y-4">
+            <Notice tone="info">
+              Lokasi berkas: Simpan atau gabungkan ke <code>~/.continue/config.json</code> di komputer lokal Anda.
+            </Notice>
+            <CodeBlock maxHeight={380}>{continueConfigJson}</CodeBlock>
           </div>
-        )}
+        </Card>
+      )}
 
-        {/* 5. AIDER & SDK */}
-        {activeAgent === "aider-sdk" && (
-          <div className="space-y-5">
-            {/* Aider CLI */}
-            <div className="card p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-base font-semibold text-ink flex items-center gap-2">
-                  <Sparkles className="text-amber-400" size={18} />
-                  Aider AI Pair Programming
-                </h3>
-                <button
-                  onClick={() => copyToClipboard(aiderCommand, "aiderCmd")}
-                  className="btn btn-secondary text-xs flex items-center gap-1.5"
-                >
-                  {copiedKey === "aiderCmd" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                  Salin Perintah
-                </button>
-              </div>
-              <pre className="bg-dark-900 border border-dark-700 rounded-xl p-3.5 text-xs font-mono text-emerald-400 overflow-x-auto">
-                {aiderCommand}
-              </pre>
-            </div>
-
-            {/* Python OpenAI SDK */}
-            <div className="card p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-base font-semibold text-ink flex items-center gap-2">
-                  <Code2 className="text-purple-400" size={18} />
-                  Python (OpenAI SDK)
-                </h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => copyToClipboard(pythonSdkSnippet, "pySdk")}
-                    className="btn btn-secondary text-xs flex items-center gap-1.5"
-                  >
-                    {copiedKey === "pySdk" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                    Salin Kode Python
-                  </button>
-                  <button
-                    onClick={() => downloadFile("test_agybridge.py", pythonSdkSnippet)}
-                    className="btn btn-primary text-xs flex items-center gap-1.5"
-                  >
-                    <Download size={14} />
-                    Unduh .py
-                  </button>
-                </div>
-              </div>
-              <pre className="bg-dark-900 border border-dark-700 rounded-xl p-4 text-xs font-mono text-gray-300 overflow-x-auto leading-relaxed">
-                {pythonSdkSnippet}
-              </pre>
-            </div>
-
-            {/* cURL API Direct */}
-            <div className="card p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-base font-semibold text-ink flex items-center gap-2">
-                  <Terminal className="text-blue-400" size={18} />
-                  Direct cURL Request
-                </h3>
-                <button
-                  onClick={() => copyToClipboard(curlSnippet, "curlCmd")}
-                  className="btn btn-secondary text-xs flex items-center gap-1.5"
-                >
-                  {copiedKey === "curlCmd" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                  Salin cURL
-                </button>
-              </div>
-              <pre className="bg-dark-900 border border-dark-700 rounded-xl p-4 text-xs font-mono text-blue-300 overflow-x-auto leading-relaxed">
-                {curlSnippet}
-              </pre>
-            </div>
+      {activeAgent === "aider-sdk" && (
+        <Card>
+          <CardHeader
+            icon={Sparkles}
+            title="Aider & SDK"
+            subtitle="Aider AI Pair Programming, Python (OpenAI SDK) dan cURL langsung."
+          />
+          <div className="space-y-6">
+            <Snippet
+              label={<span className="font-semibold text-ink">Aider AI Pair Programming</span>}
+              action={copyBtn(aiderCommand, "aiderCmd", "Salin Perintah")}
+              maxHeight={200}
+            >
+              {aiderCommand}
+            </Snippet>
+            <Snippet
+              className="pt-6 border-t border-dark-700/60"
+              label={<span className="font-semibold text-ink">Python (OpenAI SDK)</span>}
+              action={
+                <>
+                  {copyBtn(pythonSdkSnippet, "pySdk", "Salin Kode Python")}
+                  {downloadBtn("test_agybridge.py", pythonSdkSnippet, "Unduh .py")}
+                </>
+              }
+            >
+              {pythonSdkSnippet}
+            </Snippet>
+            <Snippet
+              className="pt-6 border-t border-dark-700/60"
+              label={<span className="font-semibold text-ink">Direct cURL Request</span>}
+              action={copyBtn(curlSnippet, "curlCmd", "Salin cURL")}
+            >
+              {curlSnippet}
+            </Snippet>
           </div>
-        )}
-      </div>
+        </Card>
+      )}
     </div>
   );
 }

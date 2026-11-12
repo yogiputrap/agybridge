@@ -1,32 +1,39 @@
 import {
-  AlertCircle,
+  ArrowDown,
+  ArrowLeftRight,
+  ArrowRight,
+  Ban,
   BarChart3,
+  Brain,
   Check,
-  CheckCircle2,
   Copy,
   Cpu,
   Eye,
   EyeOff,
-  Filter,
-  Info,
-  Loader2,
+  Globe,
+  Link,
   Lock,
   Network,
   Plus,
   RefreshCw,
+  Repeat,
   Save,
+  ScrollText,
   Search,
+  Server,
   Shield,
+  ShieldAlert,
+  Shuffle,
   Sliders,
   Trash2,
-  Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "../components/Modal";
 import Select from "../components/Select";
+import { Button, Card, CardHeader, EmptyState, Field, IconButton, Input, Notice, Spinner, Switch, Tabs } from "../components/ui";
 import api from "../api";
 
-function CsvNumbersField({ value, onChange, placeholder }) {
+function CsvNumbersField({ value, onChange, placeholder, id }) {
   const [text, setText] = useState(() =>
     Array.isArray(value) ? value.join(", ") : ""
   );
@@ -57,53 +64,103 @@ function CsvNumbersField({ value, onChange, placeholder }) {
   };
 
   return (
-    <input
+    <Input
+      id={id}
       type="text"
       value={text}
       onChange={handleChange}
       onBlur={handleBlur}
       placeholder={placeholder}
-      className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-ink placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500 transition-colors"
+      className="font-mono"
     />
   );
 }
 
-function LinesField({ value, onChange, placeholder }) {
-  const toText = (v) => (Array.isArray(v) ? v.join("\n") : v ?? "");
-  const [text, setText] = useState(() => toText(value));
-  const focusedRef = useRef(false);
+const cleanLines = (rows) =>
+  rows.map((w) => w.replace(/\s+$/, "")).filter((w) => w.trim() !== "");
+
+const toRows = (v) => {
+  if (Array.isArray(v)) return v.map((x) => String(x ?? ""));
+  if (typeof v === "string" && v !== "") return v.split(/\r?\n/);
+  return [];
+};
+
+/** One-entry-per-row list editor. Emits the same array of non-empty lines the old textarea did. */
+function ListField({ value, onChange, placeholder, addLabel = "Tambah baris", emptyText }) {
+  const [rows, setRows] = useState(() => toRows(value));
+  const inputRefs = useRef([]);
+  const focusIdx = useRef(null);
 
   useEffect(() => {
-    if (!focusedRef.current) setText(toText(value));
+    // Re-sync only when the outside value differs from what these rows already represent.
+    if (JSON.stringify(cleanLines(rows)) !== JSON.stringify(cleanLines(toRows(value)))) {
+      setRows(toRows(value));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  const commitText = (raw) => {
-    const lines = raw
-      .split(/\r?\n/)
-      .map((w) => w.replace(/\s+$/, ""))
-      .filter((w) => w.trim() !== "");
-    onChange(lines);
+  useEffect(() => {
+    if (focusIdx.current != null) {
+      inputRefs.current[focusIdx.current]?.focus();
+      focusIdx.current = null;
+    }
+  });
+
+  const commit = (next) => {
+    setRows(next);
+    onChange(cleanLines(next));
+  };
+
+  const update = (idx, text) => commit(rows.map((r, i) => (i === idx ? text : r)));
+  const remove = (idx) => commit(rows.filter((_, i) => i !== idx));
+  const addAfter = (idx) => {
+    const next = [...rows];
+    next.splice(idx + 1, 0, "");
+    focusIdx.current = idx + 1;
+    setRows(next);
+  };
+  const handlePaste = (idx, e) => {
+    const text = e.clipboardData?.getData("text") ?? "";
+    if (!/\r?\n/.test(text)) return;
+    e.preventDefault();
+    const pasted = text.split(/\r?\n/);
+    const next = [...rows];
+    next.splice(idx, 1, ...pasted.map((p, i) => (i === 0 ? rows[idx] + p : p)));
+    commit(next);
   };
 
   return (
-    <textarea
-      value={text}
-      onFocus={() => {
-        focusedRef.current = true;
-      }}
-      onChange={(e) => {
-        const raw = e.target.value;
-        setText(raw);
-        commitText(raw);
-      }}
-      onBlur={() => {
-        focusedRef.current = false;
-        commitText(text);
-      }}
-      placeholder={placeholder}
-      rows={5}
-      className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-ink placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
-    />
+    <div className="space-y-2">
+      {rows.length === 0 && emptyText && (
+        <div className="rounded-xl bg-dark-800 px-4 py-3 text-sm text-gray-400">{emptyText}</div>
+      )}
+      {rows.map((row, idx) => (
+        <div key={idx} className="flex items-center gap-2">
+          <Input
+            ref={(el) => {
+              inputRefs.current[idx] = el;
+            }}
+            type="text"
+            value={row}
+            onChange={(e) => update(idx, e.target.value)}
+            onPaste={(e) => handlePaste(idx, e)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addAfter(idx);
+              }
+            }}
+            onBlur={() => commit(rows)}
+            placeholder={placeholder}
+            className="flex-1 min-w-0 font-mono"
+          />
+          <IconButton icon={Trash2} label="Hapus baris" tone="danger" onClick={() => remove(idx)} className="!w-10 !h-10" />
+        </div>
+      ))}
+      <Button size="sm" variant="secondary" icon={Plus} onClick={() => addAfter(rows.length - 1)}>
+        {addLabel}
+      </Button>
+    </div>
   );
 }
 
@@ -121,6 +178,7 @@ const CONFIG_GROUPS = [
   {
     category: "security",
     title: "Konfigurasi Host & Kunci Akses",
+    icon: Server,
     description: "Pengaturan identitas jaringan dan kata sandi otorisasi akses API serta panel.",
     fields: [
       {
@@ -152,6 +210,7 @@ const CONFIG_GROUPS = [
   {
     category: "security",
     title: "Whitelist Alamat IP",
+    icon: Shield,
     description: "Batasi akses masuk hanya ke alamat IP atau subnet CIDR tepercaya.",
     fields: [
       {
@@ -173,6 +232,7 @@ const CONFIG_GROUPS = [
   {
     category: "security",
     title: "Filter Kata Sensitif",
+    icon: ShieldAlert,
     description: "Cegah kata atau frasa tertentu agar tidak memicu pembatasan upstream.",
     fields: [
       {
@@ -194,6 +254,7 @@ const CONFIG_GROUPS = [
   {
     category: "routing",
     title: "Metode Pemilihan Kredensial (Load Balancing)",
+    icon: Shuffle,
     description: "Atur strategi pemilihan akun upstream Google Antigravity untuk setiap request masuk.",
     fields: [
       {
@@ -217,6 +278,7 @@ const CONFIG_GROUPS = [
   {
     category: "routing",
     title: "Koneksi Proksi & Direktori Kredensial",
+    icon: Globe,
     description: "Konfigurasi rute keluar (outbound proxy) dan lokasi penyimpanan akun.",
     fields: [
       {
@@ -237,6 +299,7 @@ const CONFIG_GROUPS = [
   {
     category: "routing",
     title: "Konfigurasi Endpoint Upstream Google",
+    icon: Link,
     description: "Titik akhir layanan Google APIs dan Antigravity.",
     hasRestoreButton: true,
     fields: [
@@ -263,6 +326,7 @@ const CONFIG_GROUPS = [
   {
     category: "models",
     title: "Pemetaan Nama Model (Model Rewrite)",
+    icon: ArrowLeftRight,
     description: "Aliaskan atau ubah nama model klien ke model upstream yang tersedia secara transparan.",
     fields: [
       {
@@ -283,6 +347,7 @@ const CONFIG_GROUPS = [
   {
     category: "models",
     title: "Perilaku Respons & Anti-Pemotongan",
+    icon: Brain,
     description: "Pengaturan pemrosesan token penalaran dan perpanjangan respons teks panjang.",
     fields: [
       {
@@ -302,6 +367,7 @@ const CONFIG_GROUPS = [
   {
     category: "stability",
     title: "Percobaan Ulang Otomatis (Retry 429)",
+    icon: Repeat,
     description: "Penanganan otomatis saat menghadapi batas laju request (Rate Limit) dari Google.",
     fields: [
       {
@@ -327,6 +393,7 @@ const CONFIG_GROUPS = [
   {
     category: "stability",
     title: "Pemblokiran Akun Otomatis (Auto-Ban)",
+    icon: Ban,
     description: "Lindungi rotasi dari akun yang sudah tidak valid atau diblokir.",
     fields: [
       {
@@ -346,6 +413,7 @@ const CONFIG_GROUPS = [
   {
     category: "logs",
     title: "Pencatatan Riwayat & Debugging",
+    icon: ScrollText,
     description: "Pantau penggunaan token, waktu respons, dan payload permintaan untuk audit.",
     fields: [
       {
@@ -371,6 +439,9 @@ const CONFIG_GROUPS = [
     ],
   },
 ];
+
+const GROUP_ICON_FALLBACK = Sliders;
+const WIDE_TYPES = ["bool", "textarea", "rules", "select"];
 
 export default function Config() {
   const [config, setConfig] = useState({});
@@ -431,8 +502,12 @@ export default function Config() {
     setShowPasswords((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const copyValue = (text, key) => {
-    navigator.clipboard.writeText(String(text || ""));
+  const copyValue = async (text, key) => {
+    try {
+      await navigator.clipboard.writeText(String(text || ""));
+    } catch {
+      /* clipboard unavailable (insecure context): the text stays selectable */
+    }
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
   };
@@ -483,75 +558,34 @@ export default function Config() {
     return groups;
   }, [activeCategory, searchQuery]);
 
-  const renderField = (field) => {
-    const isLocked = envLocked.includes(field.key);
+  const renderControl = (field) => {
     const value = config[field.key] ?? "";
-
-    if (isLocked) {
-      return (
-        <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3.5 py-2.5">
-          <Lock size={14} className="shrink-0" />
-          <span>Nilai ini dikunci melalui variabel lingkungan (.env / OS).</span>
-        </div>
-      );
-    }
-
-    if (field.type === "bool") {
-      return (
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setField(field.key, !value)}
-            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none ${
-              value ? "bg-purple-600 shadow-sm shadow-purple-600/50" : "bg-dark-700"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-md ${
-                value ? "translate-x-6" : ""
-              }`}
-            />
-          </button>
-          <span
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-              value
-                ? "bg-purple-500/15 text-purple-300 border-purple-500/30"
-                : "bg-dark-800 text-gray-500 border-dark-600"
-            }`}
-          >
-            {value ? "Aktif" : "Nonaktif"}
-          </span>
-        </div>
-      );
-    }
+    const id = `cfg-${field.key}`;
 
     if (field.type === "password_toggle") {
       const isVisible = !!showPasswords[field.key];
       return (
-        <div className="flex items-center gap-2 max-w-lg">
-          <div className="relative flex-1">
-            <input
-              type={isVisible ? "text" : "password"}
-              value={value}
-              onChange={(e) => setField(field.key, e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm font-mono text-purple-300 focus:outline-none focus:border-purple-500 pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => togglePasswordVisibility(field.key)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink"
-            >
-              {isVisible ? <EyeOff size={15} /> : <Eye size={15} />}
-            </button>
-          </div>
-          <button
-            type="button"
+        <div className="flex items-center gap-2 min-w-0">
+          <Input
+            id={id}
+            type={isVisible ? "text" : "password"}
+            value={value}
+            onChange={(e) => setField(field.key, e.target.value)}
+            className="flex-1 min-w-0 font-mono"
+          />
+          <IconButton
+            icon={isVisible ? EyeOff : Eye}
+            label={isVisible ? "Sembunyikan" : "Tampilkan"}
+            onClick={() => togglePasswordVisibility(field.key)}
+            className="!w-10 !h-10"
+          />
+          <IconButton
+            icon={copiedKey === field.key ? Check : Copy}
+            label="Salin nilai"
+            tone={copiedKey === field.key ? "accent" : "default"}
             onClick={() => copyValue(value, field.key)}
-            className="btn btn-secondary px-3 py-2.5 text-xs shrink-0"
-            title="Salin nilai"
-          >
-            {copiedKey === field.key ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-          </button>
+            className="!w-10 !h-10"
+          />
         </div>
       );
     }
@@ -559,7 +593,7 @@ export default function Config() {
     if (field.type === "select") {
       const current = field.options.find((o) => o.value === value) || field.options[0];
       return (
-        <div className="space-y-2.5 max-w-xl">
+        <div className="space-y-3 min-w-0">
           <Select
             value={current?.value ?? ""}
             onChange={(v) => setField(field.key, v)}
@@ -567,10 +601,9 @@ export default function Config() {
             className="w-full"
           />
           {field.descriptions && current && (
-            <div className="bg-dark-900/90 border border-purple-500/20 rounded-xl p-3.5 text-xs text-purple-200 leading-relaxed shadow-sm">
-              <span className="font-semibold text-purple-300 mr-1.5">Penjelasan:</span>
+            <Notice tone="info" title="Penjelasan">
               {field.descriptions[current.value]}
-            </div>
+            </Notice>
           )}
         </div>
       );
@@ -578,13 +611,12 @@ export default function Config() {
 
     if (field.type === "csv_numbers") {
       return (
-        <div className="max-w-lg">
-          <CsvNumbersField
-            value={value}
-            onChange={(v) => setField(field.key, v)}
-            placeholder={field.placeholder}
-          />
-        </div>
+        <CsvNumbersField
+          id={id}
+          value={value}
+          onChange={(v) => setField(field.key, v)}
+          placeholder={field.placeholder}
+        />
       );
     }
 
@@ -604,63 +636,59 @@ export default function Config() {
         setField(field.key, [...rules, ["", ""]]);
       };
       return (
-        <div className="space-y-3">
+        <div className="space-y-2 min-w-0">
           {rules.length === 0 && (
-            <div className="text-xs text-gray-500 bg-dark-900 border border-dark-700 rounded-xl px-4 py-3">
+            <div className="rounded-xl bg-dark-800 px-4 py-3 text-sm text-gray-400">
               Belum ada aturan pemetaan. Klik tombol di bawah untuk menambah pemetaan nama model kustom.
             </div>
           )}
           {rules.map((rule, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={rule[0]}
-                onChange={(e) => updateRule(idx, 0, e.target.value)}
-                placeholder="Pola Regex Klien (cth: ^gpt-4o$)"
-                className="flex-1 min-w-0 px-3.5 py-2 bg-dark-900 border border-dark-600 rounded-xl text-xs text-ink placeholder-gray-500 font-mono"
-              />
-              <span className="text-purple-400 text-sm shrink-0 font-bold">→</span>
-              <input
-                type="text"
-                value={rule[1]}
-                onChange={(e) => updateRule(idx, 1, e.target.value)}
-                placeholder="Model Target (cth: gemini-3.8-flash-high)"
-                className="flex-1 min-w-0 px-3.5 py-2 bg-dark-900 border border-dark-600 rounded-xl text-xs text-ink placeholder-gray-500 font-mono"
-              />
-              <button
-                type="button"
-                onClick={() => removeRule(idx)}
-                className="shrink-0 p-2 text-gray-500 hover:text-red-400 transition-colors"
-                title="Hapus aturan ini"
-              >
-                <Trash2 size={16} />
-              </button>
+            <div key={idx} className="flex items-center gap-2 min-w-0">
+              <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                <Input
+                  type="text"
+                  value={rule[0]}
+                  onChange={(e) => updateRule(idx, 0, e.target.value)}
+                  placeholder="Pola Regex Klien (cth: ^gpt-4o$)"
+                  aria-label="Pola regex klien"
+                  className="font-mono"
+                />
+                <ArrowRight size={16} className="hidden sm:block text-gray-500" />
+                <ArrowDown size={16} className="sm:hidden text-gray-500 mx-auto" />
+                <Input
+                  type="text"
+                  value={rule[1]}
+                  onChange={(e) => updateRule(idx, 1, e.target.value)}
+                  placeholder="Model Target (cth: gemini-3.8-flash-high)"
+                  aria-label="Model target upstream"
+                  className="font-mono"
+                />
+              </div>
+              <IconButton icon={Trash2} label="Hapus aturan ini" tone="danger" onClick={() => removeRule(idx)} className="!w-10 !h-10" />
             </div>
           ))}
-          <button
-            type="button"
-            onClick={addRule}
-            className="btn btn-secondary text-xs px-3.5 py-2 flex items-center gap-1.5"
-          >
-            <Plus size={14} />
+          <Button size="sm" variant="secondary" icon={Plus} onClick={addRule}>
             Tambah Aturan Pemetaan
-          </button>
+          </Button>
         </div>
       );
     }
 
     if (field.type === "textarea") {
       return (
-        <LinesField
+        <ListField
           value={value}
           onChange={(v) => setField(field.key, v)}
           placeholder={field.placeholder}
+          addLabel={field.key === "ip_whitelist" ? "Tambah IP / CIDR" : "Tambah kata"}
+          emptyText={field.key === "ip_whitelist" ? "Belum ada alamat IP. Tambahkan satu per baris." : "Belum ada kata sensitif. Tambahkan satu per baris."}
         />
       );
     }
 
     return (
-      <input
+      <Input
+        id={id}
         type={field.type}
         value={value}
         onChange={(e) =>
@@ -670,81 +698,85 @@ export default function Config() {
           )
         }
         placeholder={field.placeholder}
-        className="w-full max-w-lg px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-ink placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
       />
     );
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header Sticky Action Bar */}
-      <div className="sticky top-[73px] z-20 bg-dark-900/95 backdrop-blur-md border border-dark-700/80 rounded-2xl p-4 shadow-card">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
-              <Sliders size={18} />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-ink tracking-tight">Pengaturan Gateway</h2>
-              <p className="text-xs text-gray-400">Konfigurasi jaringan, keamanan, rotasi akun, dan perilaku model</p>
-            </div>
-          </div>
+  const renderField = (field) => {
+    const isLocked = envLocked.includes(field.key);
+    const wide = WIDE_TYPES.includes(field.type);
+    const id = `cfg-${field.key}`;
+    const span = wide ? "md:col-span-2" : "";
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button
-              onClick={() => loadConfig()}
-              disabled={loading || saving}
-              className="btn btn-secondary text-xs sm:text-sm px-3.5 py-2 flex items-center gap-1.5"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-              Segarkan
-            </button>
-            <button
-              onClick={saveConfig}
-              disabled={saving || loading}
-              className="btn btn-primary text-xs sm:text-sm px-4 py-2 flex items-center gap-1.5 shadow-lg shadow-purple-600/20"
-            >
-              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-              {saving ? "Menyimpan..." : "Simpan Perubahan"}
-            </button>
+    if (field.type === "bool" && !isLocked) {
+      const value = !!config[field.key];
+      return (
+        <div key={field.key} className={`${span} flex items-center justify-between gap-4 rounded-2xl bg-dark-800 px-4 py-3 min-w-0`}>
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-ink break-words">{field.label}</div>
+            {field.note && <p className="mt-0.5 text-xs text-gray-500 break-words">{field.note}</p>}
           </div>
+          <Switch
+            id={id}
+            checked={value}
+            onChange={(v) => setField(field.key, v)}
+            label={value ? "Aktif" : "Nonaktif"}
+          />
         </div>
+      );
+    }
 
-        {/* Baris Kategori & Pencarian */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 mt-4 pt-3 border-t border-dark-700/60">
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              const isActive = activeCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 whitespace-nowrap transition-all ${
-                    isActive
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "bg-dark-800 text-gray-400 hover:text-white hover:bg-dark-700"
-                  }`}
-                >
-                  <Icon size={13} />
-                  {cat.label}
-                </button>
-              );
-            })}
+    return (
+      <Field
+        key={field.key}
+        label={field.label}
+        htmlFor={id}
+        hint={field.note}
+        className={span}
+      >
+        {isLocked ? (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-sm text-amber-800 dark:text-amber-300">
+            <Lock size={14} className="shrink-0" />
+            <span className="min-w-0 break-words">Nilai ini dikunci melalui variabel lingkungan (.env / OS).</span>
           </div>
+        ) : (
+          renderControl(field)
+        )}
+      </Field>
+    );
+  };
 
-          <div className="relative w-full md:w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input
+  return (
+    <div className="space-y-4">
+      {/* Bar atas: pencarian, kategori, aksi */}
+      <Card className="!p-4 sm:!p-5 space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+            <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari pengaturan..."
-              className="w-full pl-8 pr-3 py-1.5 bg-dark-800 border border-dark-600 rounded-lg text-xs text-ink placeholder-gray-500 focus:outline-none focus:border-purple-500"
+              aria-label="Cari pengaturan"
+              className="!pl-10"
             />
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button icon={RefreshCw} loading={loading} disabled={loading || saving} onClick={() => loadConfig()}>
+              Segarkan
+            </Button>
+            <Button variant="primary" icon={Save} loading={saving} disabled={saving || loading} onClick={saveConfig}>
+              {saving ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+          </div>
         </div>
-      </div>
+        <Tabs
+          tabs={CATEGORIES.map((c) => ({ id: c.id, label: c.label, icon: c.icon }))}
+          value={activeCategory}
+          onChange={setActiveCategory}
+        />
+      </Card>
 
       {/* Modal Notifikasi */}
       {message && (
@@ -758,68 +790,48 @@ export default function Config() {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
-          <Loader2 className="animate-spin text-purple-500" size={32} />
+        <Card className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
+          <Spinner size={30} />
           <p className="text-sm">Memuat pengaturan dari database...</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {filteredGroups.length === 0 ? (
-            <div className="card text-center py-12 text-gray-400 space-y-2">
-              <Filter size={28} className="mx-auto text-gray-600" />
-              <p className="text-sm">Tidak ada pengaturan yang cocok dengan kata kunci "{searchQuery}".</p>
-              <button
+        </Card>
+      ) : filteredGroups.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={Search}
+            title="Pengaturan tidak ditemukan"
+            hint={searchQuery.trim() ? `Tidak ada pengaturan yang cocok dengan kata kunci "${searchQuery}".` : "Tidak ada pengaturan pada kategori ini."}
+            action={
+              <Button
                 onClick={() => {
                   setSearchQuery("");
                   setActiveCategory("all");
                 }}
-                className="text-xs text-purple-400 hover:underline pt-1"
               >
                 Reset Filter Pencarian
-              </button>
+              </Button>
+            }
+          />
+        </Card>
+      ) : (
+        filteredGroups.map((group) => (
+          <Card key={group.title}>
+            <CardHeader
+              icon={group.icon || GROUP_ICON_FALLBACK}
+              title={group.title}
+              subtitle={group.description}
+              action={
+                group.hasRestoreButton && (
+                  <Button size="sm" icon={RefreshCw} onClick={restoreOfficialUrls}>
+                    Kembalikan Endpoint Resmi
+                  </Button>
+                )
+              }
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
+              {group.fields.filter((field) => !field.showIf || field.showIf(config)).map(renderField)}
             </div>
-          ) : (
-            filteredGroups.map((group) => (
-              <div key={group.title} className="card p-6 space-y-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-dark-700 gap-2">
-                  <div>
-                    <h3 className="text-base font-bold text-ink tracking-tight">{group.title}</h3>
-                    {group.description && (
-                      <p className="text-xs text-gray-400 mt-0.5">{group.description}</p>
-                    )}
-                  </div>
-
-                  {group.hasRestoreButton && (
-                    <button
-                      type="button"
-                      onClick={restoreOfficialUrls}
-                      className="btn btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5 self-start"
-                    >
-                      <RefreshCw size={12} />
-                      Kembalikan Endpoint Resmi
-                    </button>
-                  )}
-                </div>
-
-                <div className="space-y-5">
-                  {group.fields
-                    .filter((field) => !field.showIf || field.showIf(config))
-                    .map((field) => (
-                      <div key={field.key} className="space-y-1.5">
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
-                          {field.label}
-                        </label>
-                        {renderField(field)}
-                        {field.note && (
-                          <p className="text-[11px] text-gray-500 leading-normal">{field.note}</p>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+          </Card>
+        ))
       )}
     </div>
   );
